@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int        @id @default(autoincrement())
+  first_name       String
+  last_name        String
+  middle_last_name String?
+  role             String
+  password         String
+  email            String     @unique
+  is_active        Boolean    @default(true)
+  phone            String     @unique
+  patients         Patient[]  // one-to-many
+}
+
+model Patient {
+  id               Int        @id @default(autoincrement())
+  first_name       String
+  last_name        String
+  second_last_name String?
+  age              String
+  gender           String
+  address          String?
+  is_active        Boolean     @default(true)
+  occupation       String
+  phone            String       @unique
+  user_id          Int
+  user             User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  appointments     Appointment[]
+  records          Record[]
+}
+
+model Appointment {
+  id         Int       @id @default(autoincrement())
+  date       DateTime
+  status     Boolean   @default(true)
+  attended   Boolean?
+  patientId  Int
+  patient    Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model Record {
+  id                     Int                     @id @default(autoincrement())
+  incident_details       String
+  physical_description   String
+  treatment_demand       String
+  school_area            String
+  work_area              String
+  significant_events     String
+  psychosexual_history   String
+  therapeutic_focus      String
+  therapeutic_goal       String
+  therapeutic_strategy   String
+  therapeutic_forecast   String
+  family_diagram         String
+  family_relationship    String
+  family_mapping         String
+  diagnostic_impression  String
+  family_hypothesis      String
+  mental_exam            String
+  diagnostic_notes       String
+  consultation_reason    String
+  created_at             DateTime                @default(now())
+  patient_id             Int
+  patient                Patient                 @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  symptoms               Symptom[]
+  modalities             TherapeuticModality[]
+  clinical_notes         ClinicalNote[]
+  diagnoses              DiagnosticImpression[]
+}
+
+model Symptom {
+  id        Int     @id @default(autoincrement())
+  detail    String
+  recordId  Int
+  record    Record  @relation(fields: [recordId], references: [id], onDelete: Cascade)
+}
+
+model TherapeuticModality {
+  id          Int     @id @default(autoincrement())
+  ti          Boolean? @default(false)
+  tf          Boolean? @default(false)
+  tp          Boolean? @default(false)
+  tg          Boolean? @default(false)
+  other       Boolean? @default(false)
+  rationale   String?
+  recordId    Int
+  record      Record   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+}
+
+model ClinicalNote {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  note      String
+  recordId  Int
+  record    Record   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+}
+
+model DiagnosticImpression {
+  id        Int      @id @default(autoincrement())
+  axis      String?
+  dcm       String?
+  cie       String?
+  disorder  String?
+  recordId  Int
+  record    Record   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+}
