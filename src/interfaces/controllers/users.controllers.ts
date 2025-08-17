@@ -25,6 +25,9 @@ export const createUserController = async (
   try {
     const newUser = await createUserUseCase.execute(req.body);
 
+       
+
+
     console.log("user creation user", newUser);
 
     if (newUser == null) {

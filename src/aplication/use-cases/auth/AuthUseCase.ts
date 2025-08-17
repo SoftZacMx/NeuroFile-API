@@ -22,8 +22,10 @@ export class AuthUseCase {
 
   async execute(email: string, password: string): Promise<any | null> {
 
+    
+
     const user = await this.userRepository.findByEmail(email);
-    if (!user) throw new Error('Usuario no encontrado');
+    if (!user) throw new Error('User not found');
 
 
     console.log('password',password);
@@ -31,13 +33,14 @@ export class AuthUseCase {
     
 
     const isMatch = await this.hashService.compare(password, user.password);
-    if (!isMatch) throw new Error('Contraseña incorrecta');
+    if (!isMatch) throw new Error('Password incorrect').message = 'Password Incorrect';
 
     const tokenPayload:TokenPayload = {
       sub: `${user.id}`,
       type: "access"
     }
+    
     const token = await this.tokenService.generate(tokenPayload);
-    return { token };
+    return { token:token,user:user };
   }
 }
