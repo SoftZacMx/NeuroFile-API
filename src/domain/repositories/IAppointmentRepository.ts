@@ -8,5 +8,5 @@ export interface IAppointmentRepository {
   updateAppointment(id: number, dto: UpdateAppointmentDTO): Promise<AppointmentDTO | IPrismaError | null>;
   deleteAppointment(id: number): Promise<AppointmentDTO | IPrismaError>;
   getAppointment(id: number): Promise<AppointmentDTO | IPrismaError | null>;
-  getAppointments(): Promise<AppointmentDTO[] | IPrismaError>;
+  getAppointments(patientId?: number): Promise<AppointmentDTO[] | IPrismaError>;
 }

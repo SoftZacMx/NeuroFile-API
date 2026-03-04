@@ -112,7 +112,14 @@ export const getAppointmentsController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const AppointmentsGeted = await getAllUC.execute();
+    const patientIdParam = req.query.patientId;
+    const patientId =
+      patientIdParam != null
+        ? parseInt(String(patientIdParam), 10)
+        : undefined;
+    const patientIdFilter =
+      patientId != null && !Number.isNaN(patientId) ? patientId : undefined;
+    const AppointmentsGeted = await getAllUC.execute(patientIdFilter);
 
     if ((AppointmentsGeted as IPrismaError).code) {
       const error = errorResponse(

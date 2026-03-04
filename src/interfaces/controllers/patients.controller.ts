@@ -16,13 +16,26 @@ import { IPatientRepository } from "../../domain/repositories/IPatientsRepositor
 import { UpdatePatientUseCase } from "../../aplication/use-cases/Patients/UpdatePatientUseCase";
 import { GetPatientsUseCase } from "../../aplication/use-cases/Patients/GetPatientsUseCase";
 import { DeletePatientUseCase } from "../../aplication/use-cases/Patients/DeletePatientUseCase";
+import { GetPatientUseCase } from "../../aplication/use-cases/Patients/GetPatientUseCase";
+import { RequestWithUser } from "../../shared/types/RequestWithUser";
+import { IPrismaError } from "../../domain/errors/IPrismaErrors";
 
 const patientRepository = new PatientRepositoryImplementation();
 const createUserUseCase = new CreatePatientUseCase(patientRepository);
 const updatePatientUseCase = new UpdatePatientUseCase(patientRepository);
 const getPatientsUseCase = new GetPatientsUseCase(patientRepository);
 const deletePatientUseCase = new DeletePatientUseCase(patientRepository);
-const getPatientUseCase = new GetPatientsUseCase(patientRepository);
+const getPatientUseCase = new GetPatientUseCase(patientRepository);
+
+function isPrismaError(x: unknown): x is IPrismaError {
+  return typeof x === "object" && x !== null && "code" in x;
+}
+
+function canModifyPatient(patientUserId: number | undefined, req: RequestWithUser): boolean {
+  if (!req.user?.sub) return false;
+  if (req.user.role === "admin") return true;
+  return patientUserId === parseInt(req.user.sub, 10);
+}
 
 export const createPatientController = async (
   req: Request,
@@ -47,14 +60,24 @@ export const createPatientController = async (
 };
 
 export const updatePatientController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
-    const { user_id } = req.params;
-    const userUpdated = await updatePatientUseCase.execute(req.body, user_id);
-
-    if (!userUpdated) {
+    const patient_id = req.params.user_id;
+    const existing = await getPatientUseCase.execute(patient_id);
+    if (!existing || isPrismaError(existing)) {
+      const error = errorResponse("Paciente no encontrado.", 404);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    if (!canModifyPatient(existing.user_id, req)) {
+      const error = errorResponse("No tiene permiso para editar este paciente.", 403);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    const userUpdated = await updatePatientUseCase.execute(req.body, patient_id);
+    if (!userUpdated || isPrismaError(userUpdated)) {
       const error = errorResponse(
         "It was not possible to update the patient.",
         400
@@ -62,7 +85,6 @@ export const updatePatientController = async (
       res.status(error.status_code).json(error);
       return;
     }
-
     const success = successResponse(userUpdated, "Patient updated successfuly");
     res.status(success.status_code).json(success);
   } catch (err) {
@@ -73,11 +95,19 @@ export const updatePatientController = async (
 };
 
 export const getPatientsController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
-    const patientsGated = await getPatientsUseCase.execute();
+    if (!req.user?.sub) {
+      const error = errorResponse("No autorizado para listar pacientes.", 401);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    const loggedUserId = parseInt(req.user.sub, 10);
+    const isAdmin = req.user.role === "admin";
+    const filterUserId = isAdmin ? null : loggedUserId;
+    const patientsGated = await getPatientsUseCase.execute(filterUserId);
 
     if (!patientsGated) {
       const error = errorResponse(
@@ -100,18 +130,56 @@ export const getPatientsController = async (
   }
 };
 
-export const deletePatientController = async (
-  req: Request,
+export const getPatientController = async (
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
-    const { user_id } = req.params;
-    const patientDelete = await deletePatientUseCase.execute(user_id);
+    const patient_id = req.params.user_id;
+    const patient = await getPatientUseCase.execute(patient_id);
 
-    console.log("patientDelete", patientDelete);
-    
+    if (!patient || isPrismaError(patient)) {
+      const error = errorResponse("Paciente no encontrado.", 404);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    if (!canModifyPatient(patient.user_id, req)) {
+      const error = errorResponse(
+        "No tiene permiso para ver este paciente.",
+        403
+      );
+      res.status(error.status_code).json(error);
+      return;
+    }
 
-    if (!patientDelete) {
+    const success = successResponse(patient, "Paciente encontrado");
+    res.status(success.status_code).json(success);
+  } catch (err) {
+    console.error(err);
+    const error = errorResponse("Error al obtener el paciente", 500);
+    res.status(error.status_code).json(error);
+  }
+};
+
+export const deletePatientController = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<void> => {
+  try {
+    const patient_id = req.params.user_id;
+    const existing = await getPatientUseCase.execute(patient_id);
+    if (!existing || isPrismaError(existing)) {
+      const error = errorResponse("Paciente no encontrado.", 404);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    if (!canModifyPatient(existing.user_id, req)) {
+      const error = errorResponse("No tiene permiso para eliminar este paciente.", 403);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    const patientDelete = await deletePatientUseCase.execute(patient_id);
+    if (!patientDelete || isPrismaError(patientDelete)) {
       const error = errorResponse(
         "It was not possible to delete the patient.",
         400
@@ -119,7 +187,6 @@ export const deletePatientController = async (
       res.status(error.status_code).json(error);
       return;
     }
-
     const success = successResponse(patientDelete, "Patient deleted successfuly");
     res.status(success.status_code).json(success);
   } catch (err) {

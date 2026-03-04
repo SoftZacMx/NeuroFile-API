@@ -8,7 +8,7 @@ export class GetPatientsUseCase {
     this.patientsRepository = patientsRepository;
   }
 
-  async execute(): Promise<IPatient[] | null| IPrismaError> {
-    return this.patientsRepository.getPatients();
+  async execute(userId: number | null): Promise<IPatient[] | null | IPrismaError> {
+    return this.patientsRepository.getPatients(userId);
   }
 }

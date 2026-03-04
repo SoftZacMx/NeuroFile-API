@@ -1,201 +1,122 @@
-# Contexto API NeuroFile para Stitch (generación de UIs)
+Actúa como un Senior Product Designer especializado en SaaS médicos responsive.
 
-Este documento describe la API de NeuroFile para que la IA de Stitch pueda generar las interfaces de usuario del proyecto con el contexto correcto de módulos, endpoints y modelos de datos.
+Estoy construyendo una aplicación web llamada NeuroFile.
+Es un sistema de gestión clínica para clínicas psicológicas.
 
----
+La aplicación debe ser:
+- Web app responsive
+- Mobile-first
+- Escalable a escritorio y tablet
 
-## 1. Base URL y autenticación
+OBJETIVO:
+Optimizar la gestión clínica con fluidez operativa sin saturación visual.
 
-- **Base URL:** `http://localhost:<PORT>/api` (reemplazar `<PORT>` por el puerto del servidor).
-- **Respuesta estándar:** Todas las rutas devuelven un envelope común:
+USUARIOS:
+- Admin
+- Therapist
 
-```ts
-interface Res<T> {
-  error: boolean;      // false = éxito, true = error
-  result: boolean;
-  data: T | null;      // payload o null
-  message?: string;
-  status_code: number;
-}
-```
+PRINCIPIOS DE DISEÑO:
+- Reducir carga cognitiva.
+- No mostrar demasiados campos al mismo tiempo.
+- Mucho espacio en blanco.
+- Jerarquía visual clara.
+- Interfaz limpia, moderna y profesional.
+- Estados claros: loading, empty, error.
+- Microinteracciones suaves.
 
-- **Rutas protegidas:** Enviar header `Authorization: Bearer <token>`.
-- **Rutas públicas:** Login, verificar usuario y crear usuario (ver tabla de endpoints).
+ESTÉTICA:
+- Paleta neutra con acentos azul/verde clínico.
+- Sensación de calma.
+- Bordes suaves (8–12px).
+- Sombras sutiles.
+- Tipografía limpia.
+- Nada visualmente agresivo.
 
----
+ARQUITECTURA:
 
-## 2. Endpoints por módulo
+Mobile:
+- Bottom navigation.
+- Formularios tipo wizard vertical.
+- Botón fijo inferior.
+- Indicadores claros de progreso.
 
-### Auth (`/api/auth`)
+Desktop:
+- Sidebar fija.
+- Header superior.
+- Layout en grid.
+- Stepper horizontal para formularios largos.
 
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| POST | `/api/auth/login` | No | Login con email y contraseña |
-| POST | `/api/auth/verify-user` | No | Verificar si existe un usuario por email |
+MÓDULO CRÍTICO — EXPEDIENTE CLÍNICO
 
-**POST `/api/auth/login`**
-- **Body:** `{ email: string, password: string }`
-- **Respuesta éxito (200):** `data: { token: string, user: IUser }`
+Es un formulario largo con múltiples secciones y listas dinámicas.
 
-**POST `/api/auth/verify-user`**
-- **Body:** `{ email: string }`
-- **Respuesta:** `data: user` si existe; si no, `error: true`, `message: 'User not found'`
+Problema:
+Genera saturación y fatiga.
 
----
+Solución requerida:
 
-### Usuarios (`/api/users`)
+1. Dividir el formulario en pasos claros:
+   - Información general
+   - Historia clínica
+   - Diagnóstico
+   - Estrategia terapéutica
+   - Notas
 
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| POST | `/api/users` | No | Crear usuario |
-| GET | `/api/users` | JWT | Listar usuarios |
-| GET | `/api/users/:user_id` | JWT | Obtener un usuario |
-| PUT | `/api/users/:user_id` | JWT | Actualizar usuario |
-| DELETE | `/api/users/:user_id` | JWT | Eliminar usuario |
+2. Implementar un sistema visible de progreso que incluya:
+   - Barra de progreso porcentual (ej. 0%–100%)
+   - Indicador de pasos completados
+   - Estado visual (pendiente / en progreso / completado)
+   - Cálculo dinámico basado en campos completados
 
-**Modelo Usuario (IUser / CreateUserDTO):**
-- `id` (number, solo en respuesta)
-- `first_name` (string)
-- `last_name` (string)
-- `middle_last_name` (string | null, opcional)
-- `role` (string): ej. `"admin"`, `"therapist"`
-- `password` (string)
-- `email` (string)
-- `phone` (string)
-- `is_active` (boolean)
+3. El usuario debe poder:
+   - Ver cuánto lleva completado
+   - Navegar entre pasos
+   - Guardar borrador
+   - Retomar después
 
----
+4. Para listas dinámicas:
+   - Botón “Agregar”
+   - Elementos en tarjetas suaves
+   - Animaciones ligeras
 
-### Pacientes (`/api/patients`)
+En mobile:
+- Barra de progreso fija en la parte superior.
+- Indicador de paso actual (ej. Paso 2 de 5).
+- Botón fijo “Siguiente”.
 
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| POST | `/api/patients` | JWT | Crear paciente |
-| GET | `/api/patients` | JWT | Listar pacientes |
-| GET | `/api/patients/:user_id` | JWT | Obtener un paciente (param: user_id) |
-| PUT | `/api/patients/:user_id` | JWT | Actualizar paciente |
-| DELETE | `/api/patients/:user_id` | JWT | Eliminar paciente |
+En desktop:
+- Stepper horizontal con estados visuales.
+- Barra de progreso debajo del stepper.
+- Panel lateral opcional mostrando:
+   - % completado
+   - Secciones pendientes
 
-**Modelo Paciente (Create/Update):**
-- `first_name` (string)
-- `last_name` (string)
-- `second_last_name` (string | null, opcional)
-- `age` (string)
-- `gender` (string)
-- `address` (string | null, opcional)
-- `occupation` (string)
-- `phone` (string)
-- `user_id` (number) — usuario (terapeuta/admin) al que pertenece el paciente
-- `is_active` (boolean)
+Evitar:
+- Scroll infinito.
+- Formularios completamente expandidos.
+- Densidad alta de texto en una sola vista.
 
----
-
-### Citas / Appointments (`/api/appointments`)
-
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| POST | `/api/appointments` | JWT | Crear cita |
-| GET | `/api/appointments` | JWT | Listar citas |
-| GET | `/api/appointments/:appointment_id` | JWT | Obtener una cita |
-| PUT | `/api/appointments/:appointment_id` | JWT | Actualizar cita |
-| DELETE | `/api/appointments/:appointment_id` | JWT | Eliminar cita |
-
-**Crear cita (body):**
-- `date` (Date/string ISO)
-- `patientId` (number)
-- `status` (boolean, opcional)
-- `attended` (boolean, opcional)
-
-**Respuesta (AppointmentDTO):**
-- `id`, `date`, `status`, `attended`, `patientId`
+Sensación final:
+Control, claridad, avance continuo y baja fricción cognitiva.
 
 ---
 
-### Expedientes / Records (`/api/expedients`)
+## Resumen de módulos API — qué se puede hacer
 
-Un expediente es el expediente clínico (Record) de un paciente, con síntomas, impresiones diagnósticas y modalidades terapéuticas.
+| Módulo | Crear | Listar | Ver uno | Editar | Eliminar | Notas |
+|--------|:-----:|:------:|:-------:|:------:|:--------:|-------|
+| **Auth** | — | — | — | — | — | Login (email + password), Verificar usuario por email. Sin CRUD. |
+| **Users** | ✅ | ✅ | ✅ | ✅ | ✅ | CRUD completo. Crear usuario es público; listar/ver/editar/eliminar requieren JWT (admin). |
+| **Patients** | ✅ | ✅ | ✅ | ✅ | ✅ | CRUD completo. Todas las acciones con JWT. Paciente se asocia a un user_id. |
+| **Appointments (Citas)** | ✅ | ✅ | ✅ | ✅ | ✅ | CRUD completo. Cada cita tiene date, patientId, status, attended. |
+| **Expedients (Expedientes)** | ✅ | ✅ | ✅ | ✅ | ✅ | CRUD completo. Expediente clínico por paciente (muchos textos + síntomas, diagnósticos, modalidades). |
+| **Clinical notes (Notas clínicas)** | ✅ | ✅* | ✅ | ✅ | ✅ | CRUD completo. *Listar: por expediente (body con record_id). Cada nota tiene date, note, recordId. |
 
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| POST | `/api/expedients` | JWT | Crear expediente |
-| GET | `/api/expedients` | JWT | Listar expedientes |
-| GET | `/api/expedients/:expedient_id` | JWT | Obtener un expediente |
-| PUT | `/api/expedients/:expedient_id` | JWT | Actualizar expediente |
-| DELETE | `/api/expedients/:expedient_id` | JWT | Eliminar expediente |
+**Resumen por módulo:**
 
-**Crear expediente (body):** Campos de texto largos + paciente + arrays opcionales.
-
-- **Campos de texto (todos string):**  
-  `incident_details`, `physical_description`, `treatment_demand`, `school_area`, `work_area`, `significant_events`, `psychosexual_history`, `therapeutic_focus`, `therapeutic_goal`, `therapeutic_strategy`, `therapeutic_forecast`, `family_diagram`, `family_relationship`, `family_mapping`, `diagnostic_impression`, `family_hypothesis`, `mental_exam`, `diagnostic_notes`, `consultation_reason`
-- `patient_id` (number)
-- **Opcionales (arrays):**
-  - `symptoms`: `{ detail: string }[]`
-  - `diagnoses`: `{ axis?, dcm?, cie?, disorder? }[]`
-  - `modalities`: `{ ti?, tf?, tp?, tg?, other? (boolean), rationale? }[]`
-
-**Respuesta:** Mismo esquema con `id`, `created_at` y relaciones (symptoms, diagnoses, modalities con sus ids).
-
----
-
-### Notas clínicas (`/api/clinical-notes`)
-
-| Método | Ruta | Auth | Descripción |
-|--------|------|------|-------------|
-| POST | `/api/clinical-notes` | JWT | Crear nota clínica |
-| GET | `/api/clinical-notes` | JWT | Listar notas **por expediente** (body: record_id) |
-| GET | `/api/clinical-notes/:note_id` | JWT | Obtener una nota |
-| PUT | `/api/clinical-notes/:note_id` | JWT | Actualizar nota |
-| DELETE | `/api/clinical-notes/:note_id` | JWT | Eliminar nota |
-
-**Crear nota (body):**
-- `date` (Date/string ISO)
-- `note` (string)
-- `recordId` (number)
-
-**Respuesta (ClinicalNoteDTO):**
-- `id`, `date`, `note`, `recordId`
-
-**Importante:** La lista de notas se pide con **body** `{ record_id: number }`, no con query params.
-
----
-
-## 3. Resumen de entidades y relaciones
-
-- **User** (admin/therapist) → tiene muchos **Patient**
-- **Patient** → tiene muchas **Appointment** y muchos **Record** (expedientes)
-- **Record** → tiene **Symptom[]**, **DiagnosticImpression[]**, **TherapeuticModality[]**, **ClinicalNote[]**
-
-Flujo típico en UI:
-1. Login → guardar `token` y `user`.
-2. Listar/gestionar usuarios (si admin) o pacientes del usuario logueado.
-3. Por paciente: citas (appointments) y expedientes (records).
-4. Por expediente: notas clínicas, síntomas, diagnósticos, modalidades.
-
----
-
-## 4. Validaciones conocidas (API)
-
-- **Login:** `email` (requerido, formato email), `password` (requerido).
-- **Usuarios:** validadores para creación con email, password, name, last_name, second_last_name, role (según `users.validators.ts`).
-
-Usar estos mismos criterios en formularios de la UI para reducir errores 400.
-
----
-
-## 5. Swagger
-
-Documentación interactiva disponible en:
-- `GET http://localhost:<PORT>/api/api-docs`
-
-Útil para probar endpoints y ver esquemas actualizados.
-
----
-
-## 6. Convenciones para las UIs
-
-- Usar siempre el header `Authorization: Bearer <token>` en rutas protegidas después del login.
-- Leer `data` cuando `error === false` y `result === true`; en caso contrario mostrar `message` y tratar según `status_code`.
-- Los IDs en URL son numéricos (`user_id`, `appointment_id`, `expedient_id`, `note_id`).
-- Roles de usuario: `admin`, `therapist` — condicionar vistas/permisos según `user.role` y, si aplica, filtrar pacientes por `user_id`.
-
-Este documento refleja el estado de la API en `NeuroFile-API` y puede usarse como única fuente de verdad para generar las pantallas y flujos del frontend.
+- **Auth:** Iniciar sesión (login); verificar si existe un usuario por email. No hay crear/editar/eliminar.
+- **Users:** Crear usuario, listar usuarios, ver un usuario, editar usuario, eliminar usuario.
+- **Patients:** Crear paciente, listar pacientes, ver un paciente, editar paciente, eliminar paciente.
+- **Appointments:** Crear cita, listar citas, ver una cita, editar cita, eliminar cita.
+- **Expedients:** Crear expediente, listar expedientes, ver un expediente, editar expediente, eliminar expediente.
+- **Clinical notes:** Crear nota clínica, listar notas (por expediente), ver una nota, editar nota, eliminar nota.

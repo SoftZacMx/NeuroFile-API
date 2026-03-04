@@ -2,7 +2,7 @@ import { IAppointmentRepository } from "../../../domain/repositories/IAppointmen
 
 export class GetAppointmentsUseCase {
   constructor(private repo: IAppointmentRepository) {}
-  async execute() {
-    return await this.repo.getAppointments();
+  async execute(patientId?: number) {
+    return await this.repo.getAppointments(patientId);
   }
 }

@@ -10,7 +10,7 @@ export interface IPatientRepository {
     Patient: IUpdatePatientDTO,
     Patient_id: string
   ): Promise<IPatient | null | IPrismaError>;
-  getPatients(): Promise<IPatient[] | null | IPrismaError>;
+  getPatients(userId: number | null): Promise<IPatient[] | null | IPrismaError>;
   deletePatient(Patient_id: string): Promise<IPatient | null | IPrismaError>;
   getPatient(Patient_id: string): Promise<IPatient | null | IPrismaError>;
 }

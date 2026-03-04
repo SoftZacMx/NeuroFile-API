@@ -40,9 +40,11 @@ export class AppointmentRepositoryImpl implements IAppointmentRepository {
     }
   }
 
-  async getAppointments() {
+  async getAppointments(patientId?: number) {
     try {
-      return await prisma.appointment.findMany();
+      return await prisma.appointment.findMany({
+        where: patientId != null ? { patientId } : undefined,
+      });
     } catch (error) {
       return mapPrismaError(error);
     }

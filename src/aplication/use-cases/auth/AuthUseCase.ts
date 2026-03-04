@@ -35,10 +35,11 @@ export class AuthUseCase {
     const isMatch = await this.hashService.compare(password, user.password);
     if (!isMatch) throw new Error('Password incorrect').message = 'Password Incorrect';
 
-    const tokenPayload:TokenPayload = {
+    const tokenPayload: TokenPayload = {
       sub: `${user.id}`,
-      type: "access"
-    }
+      type: "access",
+      role: user.role,
+    };
     
     const token = await this.tokenService.generate(tokenPayload);
     return { token:token,user:user };

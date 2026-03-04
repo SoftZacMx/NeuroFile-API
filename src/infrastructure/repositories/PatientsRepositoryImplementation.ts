@@ -35,9 +35,12 @@ export class PatientRepositoryImplementation {
     }
   }
 
-  async getPatients(): Promise<IPatient[] | null | IPrismaError> {
+  async getPatients(userId: number | null): Promise<IPatient[] | null | IPrismaError> {
     try {
-      const getPatients = await prisma.patient.findMany();
+      const getPatients =
+        userId === null
+          ? await prisma.patient.findMany()
+          : await prisma.patient.findMany({ where: { user_id: userId } });
       return getPatients;
     } catch (error) {
       return mapPrismaError(error);
