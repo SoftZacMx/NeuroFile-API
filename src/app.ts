@@ -1,17 +1,33 @@
 // index.ts
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { router } from './interfaces/routes';
-import { setupSwagger } from './infrastructure/config/swagger' 
+import { setupSwagger } from './infrastructure/config/swagger';
+import prisma from './infrastructure/database/prisma/prisma.client';
 
 export const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(router)
+app.use(router);
 setupSwagger(app);
 
-app.listen(3000, () => {
-  console.log('Servidor corriendo en http://localhost:3000');
-  console.log('Documentación Swagger en http://localhost:3000/api/api-docs');
-});
+const PORT = process.env.PORT ?? 3000;
+
+async function start() {
+  try {
+    await prisma.$connect();
+    console.log('✅ Conectado a la base de datos');
+  } catch (error) {
+    console.error('❌ Error al conectar con la base de datos:', error);
+    process.exit(1);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Documentación Swagger en http://localhost:${PORT}/api/api-docs`);
+  });
+}
+
+start();
 

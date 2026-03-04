@@ -1,0 +1,416 @@
+openapi: 3.0.0
+info:
+  title: NeuroFile API
+  version: 1.0.0
+  description: API del proyecto NeuroFile (usuarios, pacientes, expedientes, notas clínicas, citas).
+
+servers:
+  - url: http://localhost:3000
+    description: Local
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  # --- Auth ---
+  /api/auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/auth/verify-user:
+    post:
+      summary: Verificar usuario (token)
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+
+  # --- Users ---
+  /api/users:
+    get:
+      summary: Listar usuarios
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Crear usuario
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name: { type: string }
+                last_name: { type: string }
+                middle_last_name: { type: string }
+                role: { type: string }
+                password: { type: string }
+                email: { type: string }
+                phone: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/users/{user_id}:
+    get:
+      summary: Obtener usuario por ID
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Actualizar usuario
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name: { type: string }
+                last_name: { type: string }
+                middle_last_name: { type: string }
+                role: { type: string }
+                password: { type: string }
+                email: { type: string }
+                phone: { type: string }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Eliminar usuario
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+
+  # --- Patients ---
+  /api/patients:
+    get:
+      summary: Listar pacientes
+      tags: [Patients]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Crear paciente
+      tags: [Patients]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name: { type: string }
+                last_name: { type: string }
+                second_last_name: { type: string }
+                age: { type: string }
+                gender: { type: string }
+                address: { type: string }
+                occupation: { type: string }
+                phone: { type: string }
+                user_id: { type: integer }
+      responses:
+        '200': { description: OK }
+  /api/patients/{user_id}:
+    get:
+      summary: Obtener paciente por ID
+      tags: [Patients]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Actualizar paciente
+      tags: [Patients]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name: { type: string }
+                last_name: { type: string }
+                second_last_name: { type: string }
+                age: { type: string }
+                gender: { type: string }
+                address: { type: string }
+                occupation: { type: string }
+                phone: { type: string }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Eliminar paciente
+      tags: [Patients]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+
+  # --- Expedients ---
+  /api/expedients:
+    get:
+      summary: Listar expedientes
+      tags: [Expedients]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Crear expediente
+      tags: [Expedients]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patient_id: { type: integer }
+                incident_details: { type: string }
+                physical_description: { type: string }
+                treatment_demand: { type: string }
+                school_area: { type: string }
+                work_area: { type: string }
+                significant_events: { type: string }
+                psychosexual_history: { type: string }
+                therapeutic_focus: { type: string }
+                therapeutic_goal: { type: string }
+                therapeutic_strategy: { type: string }
+                therapeutic_forecast: { type: string }
+                family_diagram: { type: string }
+                family_relationship: { type: string }
+                family_mapping: { type: string }
+                diagnostic_impression: { type: string }
+                family_hypothesis: { type: string }
+                mental_exam: { type: string }
+                diagnostic_notes: { type: string }
+                consultation_reason: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/expedients/{expedient_id}:
+    get:
+      summary: Obtener expediente por ID
+      tags: [Expedients]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: expedient_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Actualizar expediente
+      tags: [Expedients]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: expedient_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                incident_details: { type: string }
+                physical_description: { type: string }
+                # ... (mismos campos que create)
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Eliminar expediente
+      tags: [Expedients]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: expedient_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+
+  # --- Clinical notes ---
+  /api/clinical-notes:
+    get:
+      summary: Listar notas clínicas
+      tags: [Clinical Notes]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Crear nota clínica
+      tags: [Clinical Notes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recordId: { type: integer }
+                date: { type: string, format: date-time }
+                note: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/clinical-notes/{note_id}:
+    get:
+      summary: Obtener nota clínica por ID
+      tags: [Clinical Notes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Actualizar nota clínica
+      tags: [Clinical Notes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date: { type: string, format: date-time }
+                note: { type: string }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Eliminar nota clínica
+      tags: [Clinical Notes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: note_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+
+  # --- Appointments ---
+  /api/appointments:
+    get:
+      summary: Listar citas
+      tags: [Appointments]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Crear cita
+      tags: [Appointments]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date: { type: string, format: date-time }
+                patientId: { type: integer }
+                status: { type: boolean }
+                attended: { type: boolean }
+      responses:
+        '200': { description: OK }
+  /api/appointments/{appointment_id}:
+    get:
+      summary: Obtener cita por ID
+      tags: [Appointments]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: appointment_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Actualizar cita
+      tags: [Appointments]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: appointment_id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date: { type: string, format: date-time }
+                status: { type: boolean }
+                attended: { type: boolean }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Eliminar cita
+      tags: [Appointments]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: appointment_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK }

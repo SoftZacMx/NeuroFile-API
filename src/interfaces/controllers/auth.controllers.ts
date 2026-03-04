@@ -19,19 +19,17 @@ export const loginController = async (req: Request, res: Response): Promise<void
 
 
     if (!token) {
-      const error = errorResponse('The token was not generated', 500)
+      const error = errorResponse('The token was not generated', 500);
       res.status(error.status_code).json(error);
-      return;  // Termina aquí, sin return res.
+      return;
     }
 
-    const success = successResponse(token, 'Login successfull')
+    const success = successResponse(token, 'Login successful');
     res.status(success.status_code).json(success);
-
-    res.status(200).send({ error: false, data: token, message: 'Login successful' });
   } catch (error: any) {
     console.log('Auth - login - error: ', error);
-    const error_response = errorResponse(error.message, 500)
-    res.status(error_response.status_code).json(error);
+    const error_response = errorResponse(error?.message ?? 'Error en login', 500);
+    res.status(error_response.status_code).json(error_response);
   }
 };
 

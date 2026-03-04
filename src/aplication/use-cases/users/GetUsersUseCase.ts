@@ -12,7 +12,7 @@ export class GetUsersUseCase {
 
   }
 
-  async execute(): Promise<IUser[]|null> {
+  async execute(): Promise<(Omit<IUser, 'password'>)[] | null> {
     return this.userRepository.getUsers();
   }
 }

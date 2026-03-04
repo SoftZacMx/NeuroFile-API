@@ -49,9 +49,9 @@ export class UserRepositoryImpl {
     }
   }
 
-  async getUsers(): Promise<IUser[] | null> {
+  async getUsers(): Promise<(Omit<IUser, 'password'>)[] | null> {
     try {
-      const getUsers = await prisma.user.findMany();
+      const getUsers = await prisma.user.findMany({ omit: { password: true } });
       return getUsers;
     } catch (error) {
       console.error("Error geting the users:", error);

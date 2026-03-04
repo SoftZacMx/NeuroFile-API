@@ -1,0 +1,31 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
+      NODE_ENV: production
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: neurofile
+      MYSQL_USER: neurofile
+      MYSQL_PASSWORD: neurofile
+    ports:
+      - "3306:3306"   # Si 3306 está ocupado, usa "3307:3306" y en .env pon localhost:3307
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:

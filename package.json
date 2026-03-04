@@ -4,10 +4,16 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/app.ts"
+    "dev": "nodemon src/app.ts",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f api",
+    "db:seed": "prisma db seed"
   },
   "prisma": {
     "schema": "src/infrastructure/database/prisma/schema.prisma",
+    "seed": "ts-node src/infrastructure/database/prisma/seed.ts",
     "test": "jest"
   },
   "author": "",
@@ -22,7 +28,6 @@
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.1",
     "nodemon": "^3.1.10",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
