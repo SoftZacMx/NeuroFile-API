@@ -125,11 +125,12 @@ export const getExpedientsController = async (
 
     if ((expedientsGeted as IPrismaError).code) {
       const error = errorResponse(
-        "No pudo ser eliminado el expediente",
+        "No se pudieron obtener los expedientes",
         500,
         expedientsGeted
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(

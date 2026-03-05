@@ -17,15 +17,19 @@ import { UpdatePatientUseCase } from "../../aplication/use-cases/Patients/Update
 import { GetPatientsUseCase } from "../../aplication/use-cases/Patients/GetPatientsUseCase";
 import { DeletePatientUseCase } from "../../aplication/use-cases/Patients/DeletePatientUseCase";
 import { GetPatientUseCase } from "../../aplication/use-cases/Patients/GetPatientUseCase";
+import { GetPatientSummaryUseCase } from "../../aplication/use-cases/Patients/GetPatientSummaryUseCase";
+import { PatientSummaryRepositoryImpl } from "../../infrastructure/repositories/PatientSummaryRepositoryImpl";
 import { RequestWithUser } from "../../shared/types/RequestWithUser";
 import { IPrismaError } from "../../domain/errors/IPrismaErrors";
 
 const patientRepository = new PatientRepositoryImplementation();
+const summaryRepository = new PatientSummaryRepositoryImpl();
 const createUserUseCase = new CreatePatientUseCase(patientRepository);
 const updatePatientUseCase = new UpdatePatientUseCase(patientRepository);
 const getPatientsUseCase = new GetPatientsUseCase(patientRepository);
 const deletePatientUseCase = new DeletePatientUseCase(patientRepository);
 const getPatientUseCase = new GetPatientUseCase(patientRepository);
+const getPatientSummaryUseCase = new GetPatientSummaryUseCase(summaryRepository);
 
 function isPrismaError(x: unknown): x is IPrismaError {
   return typeof x === "object" && x !== null && "code" in x;
@@ -157,6 +161,44 @@ export const getPatientController = async (
   } catch (err) {
     console.error(err);
     const error = errorResponse("Error al obtener el paciente", 500);
+    res.status(error.status_code).json(error);
+  }
+};
+
+export const getPatientSummaryController = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<void> => {
+  try {
+    const patient_id = req.params.user_id;
+    const patient = await getPatientUseCase.execute(patient_id);
+
+    if (!patient || isPrismaError(patient)) {
+      const error = errorResponse("Paciente no encontrado.", 404);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    if (!canModifyPatient(patient.user_id, req)) {
+      const error = errorResponse(
+        "No tiene permiso para ver el resumen de este paciente.",
+        403
+      );
+      res.status(error.status_code).json(error);
+      return;
+    }
+
+    const summary = await getPatientSummaryUseCase.execute(parseInt(patient_id, 10));
+    if (isPrismaError(summary)) {
+      const error = errorResponse("Error al obtener el resumen.", 500);
+      res.status(error.status_code).json(error);
+      return;
+    }
+
+    const success = successResponse(summary, "Resumen del paciente");
+    res.status(success.status_code).json(success);
+  } catch (err) {
+    console.error(err);
+    const error = errorResponse("Error al obtener el resumen del paciente", 500);
     res.status(error.status_code).json(error);
   }
 };

@@ -8,7 +8,7 @@ export interface IClinicalNotesRepository {
     createNote(note:CreateClinicalNoteDTO): Promise<CreateClinicalNoteDTO  | IPrismaError>;
     updateNote(note:UpdateClinicalNoteDTO,note_id:number): Promise<UpdateClinicalNoteDTO | IPrismaError>;
     deleteNote(note_id:number): Promise<ClinicalNote | IPrismaError>;
-    getNotes(record_id:number): Promise<ClinicalNote[] | IPrismaError>;
+    getNotes(record_id: number, dateFrom?: string, dateTo?: string): Promise<ClinicalNote[] | IPrismaError>;
     getNote(note_id:number): Promise<ClinicalNote | IPrismaError|null>;
 
 }

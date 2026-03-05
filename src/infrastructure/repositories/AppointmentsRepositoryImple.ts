@@ -40,10 +40,25 @@ export class AppointmentRepositoryImpl implements IAppointmentRepository {
     }
   }
 
-  async getAppointments(patientId?: number) {
+  async getAppointments(
+    patientId?: number,
+    dateFrom?: string,
+    dateTo?: string
+  ) {
     try {
+      const conditions: { patientId?: number; date?: { gte?: Date; lte?: Date } } = {};
+      if (patientId != null) conditions.patientId = patientId;
+      if (dateFrom != null || dateTo != null) {
+        conditions.date = {};
+        if (dateFrom != null) {
+          conditions.date.gte = new Date(`${dateFrom}T00:00:00.000Z`);
+        }
+        if (dateTo != null) {
+          conditions.date.lte = new Date(`${dateTo}T23:59:59.999Z`);
+        }
+      }
       return await prisma.appointment.findMany({
-        where: patientId != null ? { patientId } : undefined,
+        where: Object.keys(conditions).length ? conditions : undefined,
       });
     } catch (error) {
       return mapPrismaError(error);

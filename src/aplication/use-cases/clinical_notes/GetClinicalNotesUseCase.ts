@@ -8,8 +8,12 @@ export class GetClinicalNotesUseCase {
     private clinicalNoteRepository: IClinicalNotesRepository
   ) {}
 
-  async execute(record_id:number): Promise<ClinicalNoteDTO[]  | IPrismaError>  {
-    return this.clinicalNoteRepository.getNotes(record_id);
+  async execute(
+    record_id: number,
+    dateFrom?: string,
+    dateTo?: string
+  ): Promise<ClinicalNoteDTO[] | IPrismaError> {
+    return this.clinicalNoteRepository.getNotes(record_id, dateFrom, dateTo);
   }
 
 }

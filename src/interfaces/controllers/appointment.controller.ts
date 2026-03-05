@@ -119,7 +119,19 @@ export const getAppointmentsController = async (
         : undefined;
     const patientIdFilter =
       patientId != null && !Number.isNaN(patientId) ? patientId : undefined;
-    const AppointmentsGeted = await getAllUC.execute(patientIdFilter);
+    const dateFrom =
+      typeof req.query.dateFrom === "string" && req.query.dateFrom
+        ? req.query.dateFrom
+        : undefined;
+    const dateTo =
+      typeof req.query.dateTo === "string" && req.query.dateTo
+        ? req.query.dateTo
+        : undefined;
+    const AppointmentsGeted = await getAllUC.execute(
+      patientIdFilter,
+      dateFrom,
+      dateTo
+    );
 
     if ((AppointmentsGeted as IPrismaError).code) {
       const error = errorResponse(

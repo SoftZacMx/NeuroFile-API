@@ -32,6 +32,7 @@ export const createClinicalNoteController = async (
         newClinicalNote
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -120,8 +121,26 @@ export const getClinicalNotesController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { record_id } = req.body;
-    const clinicalNotes = await getNotesUseCase.execute(parseInt(record_id));
+    const recordIdParam = req.query.record_id ?? req.body?.record_id;
+    const recordId = recordIdParam != null ? parseInt(String(recordIdParam), 10) : NaN;
+    if (Number.isNaN(recordId)) {
+      const error = errorResponse("record_id es requerido", 400);
+      res.status(error.status_code).json(error);
+      return;
+    }
+    const dateFrom =
+      typeof req.query.dateFrom === "string" && req.query.dateFrom
+        ? req.query.dateFrom
+        : undefined;
+    const dateTo =
+      typeof req.query.dateTo === "string" && req.query.dateTo
+        ? req.query.dateTo
+        : undefined;
+    const clinicalNotes = await getNotesUseCase.execute(
+      recordId,
+      dateFrom,
+      dateTo
+    );
 
     if ((clinicalNotes as IPrismaError).code) {
       const error = errorResponse(
@@ -130,6 +149,7 @@ export const getClinicalNotesController = async (
         clinicalNotes
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(

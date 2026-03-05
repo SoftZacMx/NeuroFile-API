@@ -98,7 +98,7 @@ model TherapeuticModality {
 model ClinicalNote {
   id        Int      @id @default(autoincrement())
   date      DateTime
-  note      String
+  note      String   @db.Text
   recordId  Int
   record    Record   @relation(fields: [recordId], references: [id], onDelete: Cascade)
 }
