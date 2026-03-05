@@ -6,6 +6,7 @@ import { IPrismaError } from "../../domain/errors/IPrismaErrors";
 import { IPatient } from "../../domain/entities/IPatients";
 import { ICreatePatientDTO } from "../../aplication/dtos/patients/CreatePatientDTO";
 import { IUpdatePatientDTO } from "../../aplication/dtos/patients/UpdatePatientDTO";
+import { PatientListItemDTO } from "../../aplication/dtos/patients/PatientListItemDTO";
 import { mapPrismaError } from "../../domain/errors/IPrismaErrorsMapers";
 
 export class PatientRepositoryImplementation {
@@ -35,13 +36,31 @@ export class PatientRepositoryImplementation {
     }
   }
 
-  async getPatients(userId: number | null): Promise<IPatient[] | null | IPrismaError> {
+  async getPatients(userId: number | null): Promise<PatientListItemDTO[] | null | IPrismaError> {
     try {
-      const getPatients =
-        userId === null
-          ? await prisma.patient.findMany()
-          : await prisma.patient.findMany({ where: { user_id: userId } });
-      return getPatients;
+      const patients = await prisma.patient.findMany({
+        where: userId === null ? undefined : { user_id: userId },
+        include: {
+          appointments: {
+            orderBy: { date: "desc" },
+            take: 1,
+          },
+        },
+      });
+      return patients.map((p) => {
+        const { appointments, ...patient } = p;
+        const last = appointments[0];
+        const last_appointment = last
+          ? {
+              id: last.id,
+              date: last.date,
+              status: last.status,
+              attended: last.attended,
+              patientId: last.patientId,
+            }
+          : null;
+        return { ...patient, last_appointment } as PatientListItemDTO;
+      });
     } catch (error) {
       return mapPrismaError(error);
     }

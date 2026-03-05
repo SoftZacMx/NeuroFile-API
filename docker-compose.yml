@@ -27,5 +27,88 @@ services:
       timeout: 5s
       retries: 10
 
+  # MinIO: almacenamiento S3-compatible para fragmentos de audio (desarrollo local)
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Consola web
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  # Crea el bucket neurofile-audio-local al arrancar (depende de MinIO)
+  minio-init:
+    image: minio/mc:latest
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Esperando a MinIO..."
+        sleep 15
+        mc alias set myminio http://minio:9000 minioadmin minioadmin
+        mc mb myminio/neurofile-audio-local --ignore-existing
+        echo "Bucket neurofile-audio-local listo."
+    depends_on:
+      - minio
+
+  # LocalStack: SQS para desarrollo local
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: sqs
+      DEBUG: "0"
+
+  # Crea las 3 colas SQS en LocalStack al arrancar
+  # Endpoint: en compose local usar http://localstack:4566 (por defecto). En QA/prod o otro host, definir SQS_INIT_ENDPOINT en .env
+  sqs-init:
+    image: amazon/aws-cli:latest
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      SQS_INIT_ENDPOINT: ${SQS_INIT_ENDPOINT:-http://localstack:4566}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Esperando a LocalStack (SQS)..."
+        sleep 10
+        until aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs list-queues 2>/dev/null; do echo "Reintentando en 2s..."; sleep 2; done
+        echo "Creando DLQs..."
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs create-queue --queue-name neurofile-audio-fragments-dlq
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs create-queue --queue-name neurofile-transcribe-conversation-dlq
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs create-queue --queue-name neurofile-summarize-map-dlq
+        echo "Creando colas principales..."
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs create-queue --queue-name neurofile-audio-fragments \
+          --attributes VisibilityTimeout=300,ReceiveMessageWaitTimeSeconds=20
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs create-queue --queue-name neurofile-transcribe-conversation \
+          --attributes VisibilityTimeout=1800,ReceiveMessageWaitTimeSeconds=20
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs create-queue --queue-name neurofile-summarize-map \
+          --attributes VisibilityTimeout=600,ReceiveMessageWaitTimeSeconds=20
+        echo "Configurando redrive policy (maxReceiveCount=5)..."
+        cat << 'ATTR1' > /tmp/attr1.json
+        {"RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:neurofile-audio-fragments-dlq\",\"maxReceiveCount\":\"5\"}"}
+        ATTR1
+        cat << 'ATTR2' > /tmp/attr2.json
+        {"RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:neurofile-transcribe-conversation-dlq\",\"maxReceiveCount\":\"5\"}"}
+        ATTR2
+        cat << 'ATTR3' > /tmp/attr3.json
+        {"RedrivePolicy": "{\"deadLetterTargetArn\":\"arn:aws:sqs:us-east-1:000000000000:neurofile-summarize-map-dlq\",\"maxReceiveCount\":\"5\"}"}
+        ATTR3
+        URL1=$$(aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs get-queue-url --queue-name neurofile-audio-fragments --query 'QueueUrl' --output text)
+        URL2=$$(aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs get-queue-url --queue-name neurofile-transcribe-conversation --query 'QueueUrl' --output text)
+        URL3=$$(aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs get-queue-url --queue-name neurofile-summarize-map --query 'QueueUrl' --output text)
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs set-queue-attributes --queue-url "$$URL1" --attributes file:///tmp/attr1.json
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs set-queue-attributes --queue-url "$$URL2" --attributes file:///tmp/attr2.json
+        aws --endpoint-url="$$SQS_INIT_ENDPOINT" sqs set-queue-attributes --queue-url "$$URL3" --attributes file:///tmp/attr3.json
+        echo "Colas y DLQs listas."
+    depends_on:
+      - localstack
+
 volumes:
   mysql_data:
+  minio_data:

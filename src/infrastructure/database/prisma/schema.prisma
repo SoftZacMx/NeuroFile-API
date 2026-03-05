@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id               Int        @id @default(autoincrement())
+  id               Int           @id @default(autoincrement())
   first_name       String
   last_name        String
   middle_last_name String?
   role             String
   password         String
-  email            String     @unique
-  is_active        Boolean    @default(true)
-  phone            String     @unique
-  patients         Patient[]  // one-to-many
+  email            String        @unique
+  is_active        Boolean       @default(true)
+  phone            String        @unique
+  patients         Patient[]
+  conversations    Conversation[]
 }
 
 model Patient {
@@ -74,6 +75,8 @@ model Record {
   modalities             TherapeuticModality[]
   clinical_notes         ClinicalNote[]
   diagnoses              DiagnosticImpression[]
+  conversations          Conversation[]
+  expedientDrafts        ExpedientDraft[]
 }
 
 model Symptom {
@@ -111,4 +114,50 @@ model DiagnosticImpression {
   disorder  String?
   recordId  Int
   record    Record   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+}
+
+// --- Audio → Expediente (flujo por fragmentos) ---
+
+model Conversation {
+  id                    Int                @id @default(autoincrement())
+  record_id             Int
+  user_id               Int
+  started_at            DateTime           @default(now())
+  ended_at              DateTime?
+  transcription_status  String             @default("pending") // pending | transcribing | transcribed | failed
+  full_transcription    String?            @db.Text
+  processed_at          DateTime?
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
+  record                Record             @relation(fields: [record_id], references: [id], onDelete: Cascade)
+  user                  User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  audioFragments        AudioFragment[]
+  expedientDraft        ExpedientDraft?
+}
+
+model AudioFragment {
+  id                 Int           @id @default(autoincrement())
+  conversation_id    Int
+  sequence_index    Int
+  recorded_at       DateTime
+  s3_key            String
+  s3_bucket         String?
+  status            String         @default("pending") // pending | transcribed | failed
+  transcription_text String?       @db.Text
+  created_at        DateTime       @default(now())
+  conversation      Conversation   @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@unique([conversation_id, sequence_index])
+}
+
+model ExpedientDraft {
+  id               Int          @id @default(autoincrement())
+  conversation_id  Int          @unique
+  record_id        Int
+  payload          Json         // Campos mapeados (estructura Record)
+  status           String       @default("draft") // draft | applied | discarded
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  conversation     Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  record           Record       @relation(fields: [record_id], references: [id], onDelete: Cascade)
 }
