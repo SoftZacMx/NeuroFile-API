@@ -21,4 +21,14 @@ export interface IAudioFragmentRepository {
     s3_key: string;
     s3_bucket?: string | null;
   }): Promise<AudioFragment>;
+
+  /**
+   * Actualiza el texto de transcripción y estado de un fragmento (Fase 5.4).
+   */
+  updateTranscription(data: {
+    conversation_id: number;
+    sequence_index: number;
+    transcription_text: string;
+    status: "transcribed" | "failed";
+  }): Promise<AudioFragment>;
 }

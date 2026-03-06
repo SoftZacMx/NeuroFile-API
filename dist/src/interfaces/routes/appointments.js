@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.router = void 0;
+const express_1 = require("express");
+const router = (0, express_1.Router)();
+exports.router = router;
+const appointment_controller_1 = require("../controllers/appointment.controller");
+const checkJWT_1 = require("../middelwares/auth/checkJWT");
+router.post("/", checkJWT_1.checkJWT, appointment_controller_1.createAppointmentController);
+router.put("/:appointment_id", checkJWT_1.checkJWT, appointment_controller_1.updateAppointmentController);
+router.delete("/:appointment_id", checkJWT_1.checkJWT, appointment_controller_1.deleteAppointmentController);
+router.get("/:appointment_id", checkJWT_1.checkJWT, appointment_controller_1.getAppointmentController);
+router.get("/", checkJWT_1.checkJWT, appointment_controller_1.getAppointmentsController);

@@ -37,4 +37,24 @@ export class AudioFragmentRepositoryImpl implements IAudioFragmentRepository {
       },
     });
   }
+
+  async updateTranscription(data: {
+    conversation_id: number;
+    sequence_index: number;
+    transcription_text: string;
+    status: "transcribed" | "failed";
+  }) {
+    return prisma.audioFragment.update({
+      where: {
+        conversation_id_sequence_index: {
+          conversation_id: data.conversation_id,
+          sequence_index: data.sequence_index,
+        },
+      },
+      data: {
+        transcription_text: data.transcription_text,
+        status: data.status,
+      },
+    });
+  }
 }

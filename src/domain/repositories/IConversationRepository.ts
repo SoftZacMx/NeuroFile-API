@@ -19,4 +19,17 @@ export interface IConversationRepository {
    * Marca la conversación como terminada (ended_at = now).
    */
   setEndedAt(id: number): Promise<Conversation>;
+
+  /**
+   * Actualiza el estado de transcripción (pending | transcribing | transcribed | failed).
+   */
+  setTranscriptionStatus(
+    id: number,
+    status: "pending" | "transcribing" | "transcribed" | "failed"
+  ): Promise<Conversation>;
+
+  /**
+   * Guarda la transcripción completa y marca la conversación como transcribed (Fase 5.5).
+   */
+  setFullTranscription(id: number, fullTranscription: string): Promise<Conversation>;
 }

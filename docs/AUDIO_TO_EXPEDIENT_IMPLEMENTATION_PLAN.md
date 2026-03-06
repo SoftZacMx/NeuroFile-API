@@ -23,7 +23,19 @@ Permitir que el terapeuta grabe la sesión por fragmentos (ej. 1 minuto), subir 
 - **S3:** almacenamiento de archivos de audio por fragmento.
 - **SQS:** tres colas (fragmentos, transcribir, resumir/mapear) + DLQ por cola crítica.
 - **Workers:** procesos en el backend (Node/TS) que hacen poll a SQS; no Lambdas.
-- **API:** expone inicio/fin de conversación, presigned URL y registro de fragmentos; consulta y aplicación de borrador.
+- **API:** expone inicio/fin de conversación, subida de fragmentos (recomendado: archivo a la API) o presigned URL + confirm; consulta y aplicación de borrador.
+
+---
+
+## 2.1 Flujo recomendado para el cliente (frontend)
+
+El frontend asume **mínima responsabilidad**: solo inicia la conversación, envía cada fragmento de audio a la API y termina la conversación. Todo lo demás (S3, colas, persistencia) lo hace el backend.
+
+1. **Iniciar conversación:** `POST /api/conversations` con `{ patientId }` (o `{ recordId }` si el expediente ya existe). Respuesta: `{ conversationId, startedAt [, recordId ] }`.
+2. **Por cada fragmento grabado:** `POST /api/conversations/:id/fragments/upload` con **multipart**: campos `sequenceIndex`, `recordedAt` y archivo en el campo `file`. La API sube el archivo a S3 y encola el mensaje; el worker persiste en BD. Máximo 25 MB por archivo.
+3. **Terminar conversación:** `POST /api/conversations/:id/end`. Se marca `ended_at` y se encola el mensaje para transcripción (Fase 5).
+
+**Flujo alternativo (subida directa a S3):** el cliente puede en su lugar pedir presigned URL (`POST .../fragments` con JSON), subir el archivo con PUT a esa URL y luego llamar `POST .../fragments/confirm` con el `s3Key`. Útil si se quiere evitar que el archivo pase por la API (más ancho de banda en el servidor).
 
 ---
 
@@ -49,7 +61,7 @@ Cada tarea indica de qué depende. Una tarea solo se inicia cuando todas sus dep
 
 | Id | Tarea | Depende de | Descripción |
 |----|--------|-------------|-------------|
-| **2.1** | Cliente/servicio S3 | 1.2, 1.5 | Módulo que: genere presigned URL (PUT) para subida, descargue objeto por key (getObject). Usar SDK v3 y variables de entorno. |
+| **2.1** | Cliente/servicio S3 | 1.2, 1.5 | Módulo que: genere presigned URL (PUT) para subida, suba objeto desde la API (putObject), descargue objeto por key (getObject). Usar SDK v3 y variables de entorno. |
 | **2.2** | Cliente/servicio SQS | 1.3, 1.5 | Módulo que: envíe mensaje a una cola, reciba mensajes (long polling), borre mensaje. Usar URLs de colas de env. |
 | **2.3** | Repositorios Conversation y AudioFragment | 1.1 | Repositorios (o casos de uso básicos) que usen Prisma: crear conversación, obtener por id, listar fragmentos por conversation_id ordenados por sequence_index, upsert fragmento por (conversation_id, sequence_index). |
 
@@ -59,10 +71,11 @@ Cada tarea indica de qué depende. Una tarea solo se inicia cuando todas sus dep
 
 | Id | Tarea | Depende de | Descripción |
 |----|--------|-------------|-------------|
-| **3.1** | POST crear conversación | 2.3 | Endpoint (ej. `POST /api/records/:recordId/conversations` o `POST /api/conversations` con body `{ recordId }`). Crea Conversation, devuelve `{ conversationId, startedAt }`. Validar que record existe y usuario tiene permiso. |
+| **3.1** | POST crear conversación | 2.3 | Endpoint `POST /api/conversations` con body `{ recordId }` o `{ patientId }` (uno requerido). Con `patientId`: crea expediente vacío y la conversación; con `recordId`: conversación para expediente existente. Devuelve `{ conversationId, startedAt [, recordId ] }`. Validar permisos. |
 | **3.2** | POST terminar conversación | 2.2, 2.3 | Endpoint `POST /api/conversations/:id/end`. Marca `ended_at`, publica mensaje `{ conversationId }` en cola `neurofile-transcribe-conversation`. |
-| **3.3** | POST presigned URL para fragmento | 2.1, 2.3 | Endpoint `POST /api/conversations/:id/fragments`. Body: `{ sequenceIndex, recordedAt }`. Genera s3Key, obtiene presigned URL (PUT), devuelve `{ uploadUrl, s3Key, expiresAt }`. Validar que conversación existe y no está terminada. |
-| **3.4** | POST registrar fragmento y encolar | 2.2, 2.3 | Endpoint `POST /api/conversations/:id/fragments/confirm` (o mismo con body distinto). Body: `{ sequenceIndex, recordedAt, s3Key }`. Publica mensaje en cola `neurofile-audio-fragments` con conversationId, sequenceIndex, recordedAt, s3Key. Opcional: guardar en BD desde API; si no, solo el worker persiste. |
+| **3.3** | POST subir fragmento (recomendado) | 2.1, 2.2, 2.3 | Endpoint `POST /api/conversations/:id/fragments/upload`. Multipart: `sequenceIndex`, `recordedAt`, `file` (archivo de audio). Máx 25 MB. La API sube a S3 (putObject), publica mensaje en `neurofile-audio-fragments` y devuelve `{ s3Key }`. El worker persiste en BD. |
+| **3.4** | POST presigned URL para fragmento (alternativo) | 2.1, 2.3 | Endpoint `POST /api/conversations/:id/fragments`. Body: `{ sequenceIndex, recordedAt }`. Genera s3Key, obtiene presigned URL (PUT), devuelve `{ uploadUrl, s3Key, expiresAt }`. Para flujo en que el cliente sube directo a S3. |
+| **3.5** | POST confirmar fragmento (alternativo) | 2.2, 2.3 | Endpoint `POST /api/conversations/:id/fragments/confirm`. Body: `{ sequenceIndex, recordedAt, s3Key }`. Usado tras subida directa a S3: publica mensaje en `neurofile-audio-fragments`; el worker persiste. |
 
 ---
 
@@ -209,6 +222,7 @@ Cada cola con DLQ y redrive policy (3–5 reintentos).
 ## 7. Dependencias técnicas (backend)
 
 - **AWS SDK (v3):** `@aws-sdk/client-s3`, `@aws-sdk/client-sqs`, `@aws-sdk/s3-request-presigner`.
+- **Multer:** para recibir multipart (archivo + campos) en `POST .../fragments/upload`.
 - **OpenAI (o equivalente):** Whisper para transcripción.
 - **Cliente LLM:** resumen y mapeo (OpenAI, Anthropic, Azure, etc.).
 - **Variables de entorno:** AWS_REGION, S3_BUCKET_AUDIO, URLs de las 3 colas (y DLQ), OPENAI_API_KEY (o equivalente).

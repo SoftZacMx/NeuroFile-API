@@ -26,4 +26,24 @@ export class ConversationRepositoryImpl implements IConversationRepository {
       data: { ended_at: new Date() },
     });
   }
+
+  async setTranscriptionStatus(
+    id: number,
+    status: "pending" | "transcribing" | "transcribed" | "failed"
+  ) {
+    return prisma.conversation.update({
+      where: { id },
+      data: { transcription_status: status },
+    });
+  }
+
+  async setFullTranscription(id: number, fullTranscription: string) {
+    return prisma.conversation.update({
+      where: { id },
+      data: {
+        full_transcription: fullTranscription,
+        transcription_status: "transcribed",
+      },
+    });
+  }
 }

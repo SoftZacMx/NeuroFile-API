@@ -10,6 +10,49 @@ services:
       mysql:
         condition: service_healthy
 
+  # Worker: consume neurofile-audio-fragments y hace upsert en AudioFragment (Fase 4.3)
+  worker-fragments:
+    build: .
+    command: ["node", "dist/src/workers/run-fragments-worker.js"]
+    environment:
+      DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
+      SQS_ENDPOINT: http://localstack:4566
+      SQS_QUEUE_AUDIO_FRAGMENTS: neurofile-audio-fragments
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      S3_BUCKET_AUDIO: neurofile-audio-local
+    depends_on:
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+
+  # Worker: consume neurofile-transcribe-conversation; Whisper, concatena y encola summarize-map (Fase 5.6)
+  worker-transcribe:
+    build: .
+    command: ["node", "dist/src/workers/run-transcribe-worker.js"]
+    environment:
+      DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
+      SQS_ENDPOINT: http://localstack:4566
+      SQS_QUEUE_TRANSCRIBE_CONVERSATION: neurofile-transcribe-conversation
+      SQS_QUEUE_SUMMARIZE_MAP: neurofile-summarize-map
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_REGION: us-east-1
+      S3_BUCKET_AUDIO: neurofile-audio-local
+      S3_ENDPOINT: http://minio:9000
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+      minio:
+        condition: service_started
+      sqs-init:
+        condition: service_completed_successfully
+
   mysql:
     image: mysql:8.0
     environment:

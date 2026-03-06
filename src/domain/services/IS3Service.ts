@@ -16,4 +16,11 @@ export interface IS3Service {
    * @returns Contenido del archivo (ej. audio para Whisper)
    */
   getObject(s3Key: string): Promise<Buffer>;
+
+  /**
+   * Sube un objeto al bucket (desde la API). Usado cuando el cliente envía el archivo a la API.
+   * @param s3Key Clave del objeto
+   * @param body Contenido del archivo (buffer)
+   */
+  putObject(s3Key: string, body: Buffer): Promise<void>;
 }
