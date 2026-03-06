@@ -68,6 +68,12 @@ export async function runFragmentsConsumerLoop(
   onMessage: ProcessFragmentHandler
 ): Promise<void> {
   const queueUrl = sqsService.getQueueUrl(QUEUE_KEY);
+  console.error(
+    "[worker:fragments] Conectado a la cola neurofile-audio-fragments, long poll cada %ss",
+    WAIT_TIME_SECONDS
+  );
+
+  let pollCount = 0;
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -76,6 +82,19 @@ export async function runFragmentsConsumerLoop(
         maxNumberOfMessages: 10,
         waitTimeSeconds: WAIT_TIME_SECONDS,
       });
+
+      pollCount += 1;
+      if (messages.length > 0) {
+        console.error(
+          "[worker:fragments] Recibidos %s mensaje(s) de la cola",
+          messages.length
+        );
+      } else if (pollCount % 3 === 1) {
+        console.error(
+          "[worker:fragments] En espera de mensajes (poll #%s)...",
+          pollCount
+        );
+      }
 
       for (const message of messages) {
         const payload = extractFragmentPayload(message.body);
@@ -88,6 +107,12 @@ export async function runFragmentsConsumerLoop(
           continue;
         }
 
+        console.error(
+          "[worker:fragments] Mensaje recibido de la cola. messageId=%s conversationId=%s sequenceIndex=%s",
+          message.messageId,
+          payload.conversationId,
+          payload.sequenceIndex
+        );
         try {
           const success = await onMessage(payload);
           if (success) {

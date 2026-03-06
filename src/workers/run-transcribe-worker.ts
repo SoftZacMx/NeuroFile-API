@@ -9,6 +9,8 @@ import { AudioFragmentRepositoryImpl } from "../infrastructure/repositories/Audi
 import { SqsServiceImpl } from "../infrastructure/services/SqsServiceImpl";
 import { S3ServiceImpl } from "../infrastructure/services/S3ServiceImpl";
 import { WhisperServiceImpl } from "../infrastructure/services/WhisperServiceImpl";
+import { WhisperLocalServiceImpl } from "../infrastructure/services/WhisperLocalServiceImpl";
+import type { IWhisperService } from "../domain/services/IWhisperService";
 import { GetFragmentAudioUseCase } from "../aplication/use-cases/transcription/GetFragmentAudioUseCase";
 import {
   runTranscribeConsumerLoop,
@@ -19,7 +21,12 @@ const conversationRepository = new ConversationRepositoryImpl();
 const audioFragmentRepository = new AudioFragmentRepositoryImpl();
 const sqsService = new SqsServiceImpl();
 const s3Service = new S3ServiceImpl();
-const whisperService = new WhisperServiceImpl();
+
+const whisperProvider = (process.env.WHISPER_PROVIDER ?? "openai").toLowerCase();
+const whisperService: IWhisperService =
+  whisperProvider === "local"
+    ? new WhisperLocalServiceImpl()
+    : new WhisperServiceImpl();
 const getFragmentAudioUseCase = new GetFragmentAudioUseCase(s3Service);
 
 /** Serializa un error para logs (mensaje + stack si existe). */
@@ -128,6 +135,11 @@ async function handleTranscribeMessage(
       return false;
     }
 
+    console.log(
+      "[worker:transcribe] Whisper OK. conversationId=%s sequence_index=%s",
+      conversationId,
+      fragment.sequence_index
+    );
     await audioFragmentRepository.updateTranscription({
       conversation_id: conversationId,
       sequence_index: fragment.sequence_index,
@@ -145,7 +157,15 @@ async function handleTranscribeMessage(
       fullTranscription
     );
     const summarizeQueueUrl = sqsService.getQueueUrl("summarize-map");
+    console.log(
+      "[worker:transcribe] Encolando conversationId=%s en neurofile-summarize-map",
+      conversationId
+    );
     await sqsService.sendMessage(summarizeQueueUrl, { conversationId });
+    console.log(
+      "[worker:transcribe] Mensaje encolado correctamente. conversationId=%s",
+      conversationId
+    );
     console.log(
       "[worker:transcribe] Transcripción completada. conversationId=%s fragmentos=%s",
       conversationId,
@@ -153,7 +173,7 @@ async function handleTranscribeMessage(
     );
   } catch (err) {
     console.error(
-      "[worker:transcribe] Error al guardar full_transcription o encolar summarize-map. conversationId=%s error=%s",
+      "[worker:transcribe] Error al guardar full_transcription o al encolar en neurofile-summarize-map. conversationId=%s error=%s",
       conversationId,
       formatError(err)
     );
@@ -168,7 +188,8 @@ async function handleTranscribeMessage(
 }
 
 console.log(
-  "[worker:transcribe] Iniciando consumidor de neurofile-transcribe-conversation..."
+  "[worker:transcribe] Iniciando consumidor de neurofile-transcribe-conversation (Whisper: %s)...",
+  whisperProvider
 );
 runTranscribeConsumerLoop(sqsService, handleTranscribeMessage).catch((err) => {
   console.error("[worker:transcribe] Fatal:", err);

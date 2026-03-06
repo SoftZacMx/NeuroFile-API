@@ -133,6 +133,7 @@ export const endConversationController = async (
       res.status(error.status_code).json(error);
       return;
     }
+    console.log("[api] POST /conversations/:id/end recibido. conversationId=%s", conversationId);
 
     const userId = parseInt(req.user?.sub ?? "", 10);
     if (isNaN(userId)) {
@@ -153,10 +154,14 @@ export const endConversationController = async (
       return;
     }
 
+    console.log(
+      "[api] Conversación terminada; mensaje encolado en neurofile-transcribe-conversation. conversationId=%s",
+      conversationId
+    );
     const success = successResponse(null, "Conversación terminada");
     res.status(200).json(success);
   } catch (err) {
-    console.error(err);
+    console.error("[api] Error al terminar la conversación:", err);
     const error = errorResponse("Error al terminar la conversación", 500);
     res.status(error.status_code).json(error);
   }
@@ -381,13 +386,19 @@ export const uploadFragmentController = async (
       return;
     }
 
+    console.log(
+      "[api] Fragmento subido; mensaje encolado en neurofile-audio-fragments. conversationId=%s sequenceIndex=%s s3Key=%s",
+      conversationId,
+      sequenceIndex,
+      result.s3Key
+    );
     const success = successResponse(
       { s3Key: result.s3Key },
       "Fragmento subido y encolado"
     );
     res.status(201).json(success);
   } catch (err) {
-    console.error(err);
+    console.error("[api] Error al subir el fragmento:", err);
     const error = errorResponse("Error al subir el fragmento", 500);
     res.status(error.status_code).json(error);
   }

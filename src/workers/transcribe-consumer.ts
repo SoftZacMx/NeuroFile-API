@@ -49,6 +49,12 @@ export async function runTranscribeConsumerLoop(
   onMessage: ProcessTranscribeHandler
 ): Promise<void> {
   const queueUrl = sqsService.getQueueUrl(QUEUE_KEY);
+  console.error(
+    "[worker:transcribe] Conectado a la cola neurofile-transcribe-conversation, long poll cada %ss",
+    WAIT_TIME_SECONDS
+  );
+
+  let pollCount = 0;
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -57,6 +63,19 @@ export async function runTranscribeConsumerLoop(
         maxNumberOfMessages: 10,
         waitTimeSeconds: WAIT_TIME_SECONDS,
       });
+
+      pollCount += 1;
+      if (messages.length > 0) {
+        console.error(
+          "[worker:transcribe] Recibidos %s mensaje(s) de la cola",
+          messages.length
+        );
+      } else if (pollCount % 3 === 1) {
+        console.error(
+          "[worker:transcribe] En espera de mensajes (poll #%s)...",
+          pollCount
+        );
+      }
 
       for (const message of messages) {
         const payload = extractTranscribePayload(message.body);
@@ -70,6 +89,11 @@ export async function runTranscribeConsumerLoop(
           continue;
         }
 
+        console.error(
+          "[worker:transcribe] Mensaje recibido de la cola. messageId=%s conversationId=%s",
+          message.messageId,
+          payload.conversationId
+        );
         try {
           const success = await onMessage(payload);
           if (success) {

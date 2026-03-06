@@ -33,7 +33,14 @@ export class EndConversationUseCase {
     await this.conversationRepository.setEndedAt(conversationId);
 
     const queueUrl = this.sqsService.getQueueUrl("transcribe-conversation");
-    await this.sqsService.sendMessage(queueUrl, { conversationId });
+    try {
+      console.log("[api] Encolando en neurofile-transcribe-conversation. conversationId=%s url=%s", conversationId, queueUrl);
+      await this.sqsService.sendMessage(queueUrl, { conversationId });
+      console.log("[api] Mensaje encolado OK. conversationId=%s", conversationId);
+    } catch (err) {
+      console.error("[api] Error al encolar en neurofile-transcribe-conversation:", err);
+      throw err;
+    }
 
     return { ok: true };
   }
