@@ -1,6 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
 import { checkJWT } from "../middelwares/auth/checkJWT";
+import { asyncHandler } from "../../shared/middelwares/asyncHandler";
+import { createConversationValidator } from "../middelwares/validators/conversations.validators";
 import {
   createConversationController,
   endConversationController,
@@ -21,27 +23,27 @@ const uploadFragmentMulter = multer({
  * Body: { recordId?: number, patientId?: number } — exactamente uno requerido.
  * recordId: conversación para expediente existente. patientId: crea expediente vacío para el paciente y la conversación (devuelve también recordId). Requiere JWT.
  */
-router.post("/", checkJWT, createConversationController);
+router.post("/", checkJWT, createConversationValidator, asyncHandler(createConversationController));
 
 /**
  * POST /api/conversations/:id/end
  * Termina la conversación (ended_at) y encola mensaje para transcripción.
  */
-router.post("/:id/end", checkJWT, endConversationController);
+router.post("/:id/end", checkJWT, asyncHandler(endConversationController));
 
 /**
  * POST /api/conversations/:id/fragments
  * Body: { sequenceIndex: number, recordedAt: string (ISO) }
  * Devuelve { uploadUrl, s3Key, expiresAt } para subir el fragmento de audio (PUT a uploadUrl).
  */
-router.post("/:id/fragments", checkJWT, getPresignedFragmentUrlController);
+router.post("/:id/fragments", checkJWT, asyncHandler(getPresignedFragmentUrlController));
 
 /**
  * POST /api/conversations/:id/fragments/upload (recomendado)
  * Multipart: sequenceIndex, recordedAt (form), file (archivo de audio). Máx 25 MB.
  * La API sube a S3 y encola; el worker persiste en BD. El front solo envía el archivo.
  */
-router.post("/:id/fragments/upload", checkJWT, uploadFragmentMulter, uploadFragmentController);
+router.post("/:id/fragments/upload", checkJWT, uploadFragmentMulter, asyncHandler(uploadFragmentController));
 
 /**
  * POST /api/conversations/:id/fragments/confirm
@@ -49,6 +51,6 @@ router.post("/:id/fragments/upload", checkJWT, uploadFragmentMulter, uploadFragm
  * Encola el fragmento en neurofile-audio-fragments (el worker persiste en BD).
  * Usado cuando el cliente sube directo a S3 (presigned) y luego confirma.
  */
-router.post("/:id/fragments/confirm", checkJWT, confirmFragmentController);
+router.post("/:id/fragments/confirm", checkJWT, asyncHandler(confirmFragmentController));
 
 export { router };

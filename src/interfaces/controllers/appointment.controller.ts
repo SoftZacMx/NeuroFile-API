@@ -39,7 +39,7 @@ export const createAppointmentController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al intentar crear el Appointmente", 500);
+    const error = errorResponse("Error al intentar crear la cita", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -73,7 +73,7 @@ export const updateAppointmentController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to update the Appointment", 500);
+    const error = errorResponse("Error al actualizar la cita", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -102,7 +102,7 @@ export const deleteAppointmentController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to delete the Appointment", 500);
+    const error = errorResponse("Error al eliminar la cita", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -149,7 +149,7 @@ export const getAppointmentsController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the Appointments", 500);
+    const error = errorResponse("Error al obtener las citas", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -182,7 +182,7 @@ export const getAppointmentController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the Appointment", 500);
+    const error = errorResponse("Error al obtener la cita", 500);
     res.status(error.status_code).json(error);
   }
 };

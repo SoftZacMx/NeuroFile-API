@@ -1,5 +1,4 @@
 import { Router } from "express";
-const router = Router();
 import {
   createAppointmentController,
   updateAppointmentController,
@@ -8,11 +7,15 @@ import {
   getAppointmentsController,
 } from "../controllers/appointment.controller";
 import { checkJWT } from "../middelwares/auth/checkJWT";
+import { asyncHandler } from "../../shared/middelwares/asyncHandler";
+import { createAppointmentValidator, updateAppointmentValidator } from "../middelwares/validators/appointments.validators";
 
-router.post("/", checkJWT, createAppointmentController);
-router.put("/:appointment_id", checkJWT, updateAppointmentController);
-router.delete("/:appointment_id", checkJWT, deleteAppointmentController);
-router.get("/:appointment_id", checkJWT, getAppointmentController);
-router.get("/", checkJWT, getAppointmentsController);
+const router = Router();
+
+router.post("/", checkJWT, createAppointmentValidator, asyncHandler(createAppointmentController));
+router.put("/:appointment_id", checkJWT, updateAppointmentValidator, asyncHandler(updateAppointmentController));
+router.delete("/:appointment_id", checkJWT, asyncHandler(deleteAppointmentController));
+router.get("/:appointment_id", checkJWT, asyncHandler(getAppointmentController));
+router.get("/", checkJWT, asyncHandler(getAppointmentsController));
 
 export { router };

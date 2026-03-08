@@ -55,7 +55,7 @@ export const updateUserController = async (
 
     if (!userUpdated) {
       const error = errorResponse(
-        "It was not possible to update the user.",
+        "No fue posible actualizar el usuario.",
         400
       );
       res.status(error.status_code).json(error);
@@ -66,7 +66,7 @@ export const updateUserController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to update the user", 500);
+    const error = errorResponse("Error al actualizar el usuario", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -81,7 +81,7 @@ export const deleteUserController = async (
 
     if (!userDeleted) {
       const error = errorResponse(
-        "It was not possible to delete the user.",
+        "No fue posible eliminar el usuario.",
         400
       );
       res.status(error.status_code).json(error);
@@ -92,7 +92,7 @@ export const deleteUserController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to delete the user", 500);
+    const error = errorResponse("Error al eliminar el usuario", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -105,7 +105,7 @@ export const getUsersController = async (
     const usersGeted = await getUsersUseCase.execute();
 
     if (!usersGeted) {
-      const error = errorResponse("It was not possible to get the users.", 400);
+      const error = errorResponse("No fue posible obtener los usuarios.", 400);
       res.status(error.status_code).json(error);
       return;
     }
@@ -114,7 +114,7 @@ export const getUsersController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the users", 500);
+    const error = errorResponse("Error al obtener los usuarios", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -128,7 +128,7 @@ export const getUserController = async (
     const userGeted = await getUserUseCase.execute(user_id);
 
     if (!userGeted) {
-      const error = errorResponse("It was not possible to find the user.", 400);
+      const error = errorResponse("No fue posible encontrar el usuario.", 400);
       res.status(error.status_code).json(error);
       return;
     }
@@ -137,7 +137,7 @@ export const getUserController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the user", 500);
+    const error = errorResponse("Error al obtener el usuario", 500);
     res.status(error.status_code).json(error);
   }
 };

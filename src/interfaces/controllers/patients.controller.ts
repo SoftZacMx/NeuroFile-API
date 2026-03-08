@@ -83,17 +83,17 @@ export const updatePatientController = async (
     const userUpdated = await updatePatientUseCase.execute(req.body, patient_id);
     if (!userUpdated || isPrismaError(userUpdated)) {
       const error = errorResponse(
-        "It was not possible to update the patient.",
+        "No fue posible actualizar el paciente.",
         400
       );
       res.status(error.status_code).json(error);
       return;
     }
-    const success = successResponse(userUpdated, "Patient updated successfuly");
+    const success = successResponse(userUpdated, "Paciente actualizado correctamente");
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to update the patient", 500);
+    const error = errorResponse("Error al actualizar el paciente", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -115,7 +115,7 @@ export const getPatientsController = async (
 
     if (!patientsGated) {
       const error = errorResponse(
-        "It was not possible to get the patients.",
+        "No fue posible obtener los pacientes.",
         400
       );
       res.status(error.status_code).json(error);
@@ -124,12 +124,12 @@ export const getPatientsController = async (
 
     const success = successResponse(
       patientsGated,
-      "Patients geted successfuly"
+      "Pacientes obtenidos correctamente"
     );
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the patients", 500);
+    const error = errorResponse("Error al obtener los pacientes", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -223,17 +223,17 @@ export const deletePatientController = async (
     const patientDelete = await deletePatientUseCase.execute(patient_id);
     if (!patientDelete || isPrismaError(patientDelete)) {
       const error = errorResponse(
-        "It was not possible to delete the patient.",
+        "No fue posible eliminar el paciente.",
         400
       );
       res.status(error.status_code).json(error);
       return;
     }
-    const success = successResponse(patientDelete, "Patient deleted successfuly");
+    const success = successResponse(patientDelete, "Paciente eliminado correctamente");
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to delete the patient", 500);
+    const error = errorResponse("Error al eliminar el paciente", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -252,7 +252,7 @@ export const getUserController = async (
     const userGeted = await getUserUseCase.execute(user_id);
 
     if (!userGeted) {
-      const error = errorResponse("It was not possible to find the user.", 400);
+      const error = errorResponse("No fue posible encontrar el usuario.", 400);
       res.status(error.status_code).json(error);
       return;
     }
@@ -261,7 +261,7 @@ export const getUserController = async (
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the user", 500);
+    const error = errorResponse("Error al obtener el usuario", 500);
     res.status(error.status_code).json(error);
   }
 };

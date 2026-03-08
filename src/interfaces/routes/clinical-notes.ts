@@ -1,8 +1,16 @@
 import { Router } from "express";
-const router = Router();
 import { checkJWT } from "../middelwares/auth/checkJWT";
-import { createExpedientController, deleteExpedientController, getExpedientsController, updateExpedientController, getExpedinetController } from "../controllers/expedients.controllers";
-import { createClinicalNoteController, deleteClinicalNoteController, getClinicalNoteController, getClinicalNotesController, updateClinicalNoteController } from "../controllers/clinical-notes.controller";
+import { asyncHandler } from "../../shared/middelwares/asyncHandler";
+import { createClinicalNoteValidator, updateClinicalNoteValidator } from "../middelwares/validators/clinical-notes.validators";
+import {
+  createClinicalNoteController,
+  deleteClinicalNoteController,
+  getClinicalNoteController,
+  getClinicalNotesController,
+  updateClinicalNoteController,
+} from "../controllers/clinical-notes.controller";
+
+const router = Router();
 
 
 
@@ -29,11 +37,11 @@ import { createClinicalNoteController, deleteClinicalNoteController, getClinical
  */
 
 
-router.put("/:note_id",checkJWT,updateClinicalNoteController);
-router.delete("/:note_id",checkJWT,deleteClinicalNoteController);
-router.get("/",checkJWT,getClinicalNotesController);
-router.get("/:note_id",checkJWT,getClinicalNoteController);
-router.post("/",checkJWT,createClinicalNoteController);
+router.put("/:note_id", checkJWT, updateClinicalNoteValidator, asyncHandler(updateClinicalNoteController));
+router.delete("/:note_id", checkJWT, asyncHandler(deleteClinicalNoteController));
+router.get("/", checkJWT, asyncHandler(getClinicalNotesController));
+router.get("/:note_id", checkJWT, asyncHandler(getClinicalNoteController));
+router.post("/", checkJWT, createClinicalNoteValidator, asyncHandler(createClinicalNoteController));
 
 /*
 

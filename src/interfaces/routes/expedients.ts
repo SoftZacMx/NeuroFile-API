@@ -1,7 +1,16 @@
 import { Router } from "express";
-const router = Router();
 import { checkJWT } from "../middelwares/auth/checkJWT";
-import { createExpedientController, deleteExpedientController, getExpedientsController, updateExpedientController, getExpedinetController } from "../controllers/expedients.controllers";
+import { asyncHandler } from "../../shared/middelwares/asyncHandler";
+import { createExpedientValidator, updateExpedientValidator } from "../middelwares/validators/expedients.validators";
+import {
+  createExpedientController,
+  deleteExpedientController,
+  getExpedientsController,
+  updateExpedientController,
+  getExpedinetController,
+} from "../controllers/expedients.controllers";
+
+const router = Router();
 
 
 
@@ -29,11 +38,11 @@ import { createExpedientController, deleteExpedientController, getExpedientsCont
  */
 
 
-router.put("/:expedient_id",checkJWT,updateExpedientController);
-router.delete("/:expedient_id",checkJWT,deleteExpedientController);
-router.get("/:expedient_id",checkJWT,getExpedinetController);
-router.post("/",checkJWT,createExpedientController);
-router.get("/",checkJWT,getExpedientsController);
+router.put("/:expedient_id", checkJWT, updateExpedientValidator, asyncHandler(updateExpedientController));
+router.delete("/:expedient_id", checkJWT, asyncHandler(deleteExpedientController));
+router.get("/:expedient_id", checkJWT, asyncHandler(getExpedinetController));
+router.post("/", checkJWT, createExpedientValidator, asyncHandler(createExpedientController));
+router.get("/", checkJWT, asyncHandler(getExpedientsController));
 
 
 export {router};

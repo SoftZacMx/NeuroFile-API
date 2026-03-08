@@ -1,16 +1,20 @@
 // index.ts
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import { router } from './interfaces/routes';
-import { setupSwagger } from './infrastructure/config/swagger';
-import prisma from './infrastructure/database/prisma/prisma.client';
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import { router } from "./interfaces/routes";
+import { setupSwagger } from "./infrastructure/config/swagger";
+import { globalErrorHandler } from "./shared/middelwares/globalError.middleware";
+import { requestIdMiddleware } from "./shared/middelwares/requestId.middleware";
+import prisma from "./infrastructure/database/prisma/prisma.client";
 
 export const app = express();
+app.use(requestIdMiddleware);
 app.use(cors());
 app.use(express.json());
 app.use(router);
 setupSwagger(app);
+app.use(globalErrorHandler);
 
 const PORT = process.env.PORT ?? 3000;
 

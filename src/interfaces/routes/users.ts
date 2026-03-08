@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { createUserController, deleteUserController, getUserController, getUsersController, updateUserController } from "../controllers/users.controllers";
-const router = Router();
+import {
+  createUserController,
+  deleteUserController,
+  getUserController,
+  getUsersController,
+  updateUserController,
+} from "../controllers/users.controllers";
 import { checkJWT } from "../middelwares/auth/checkJWT";
-import { TokenService } from "../../infrastructure/services/TokenServiceImpl";
-import { check } from "express-validator";
+import { asyncHandler } from "../../shared/middelwares/asyncHandler";
+
+const router = Router();
 
 
-
-
-
-
-
-const tokenService = new TokenService();
 
 
 /**
@@ -29,12 +29,11 @@ const tokenService = new TokenService();
  *       200:
  *         description: Usuario creado
  */
-
-router.post("/",createUserController);
-router.put("/:user_id",checkJWT,updateUserController);
-router.delete("/:user_id",checkJWT,deleteUserController);
-router.get("/",checkJWT,getUsersController);
-router.get("/:user_id",checkJWT,getUserController);
+router.post("/", asyncHandler(createUserController));
+router.put("/:user_id", checkJWT, asyncHandler(updateUserController));
+router.delete("/:user_id", checkJWT, asyncHandler(deleteUserController));
+router.get("/", checkJWT, asyncHandler(getUsersController));
+router.get("/:user_id", checkJWT, asyncHandler(getUserController));
 
 
 

@@ -78,12 +78,12 @@ export const updateExpedientController = async (
 
     const success = successResponse(
       expedientUpdated,
-      "Expedient updated successfuly"
+      "Expediente actualizado correctamente"
     );
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to update the expedient", 500);
+    const error = errorResponse("Error al actualizar el expediente", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -106,12 +106,12 @@ export const deleteExpedientController = async (
     }
     const success = successResponse(
       expedientDeleted,
-      "Expedient deleted successfuly"
+      "Expediente eliminado correctamente"
     );
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to delete the expedient", 500);
+    const error = errorResponse("Error al eliminar el expediente", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -135,12 +135,12 @@ export const getExpedientsController = async (
 
     const success = successResponse(
       expedientsGeted,
-      "Expedients geted successfuly"
+      "Expedientes obtenidos correctamente"
     );
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the expedients", 500);
+    const error = errorResponse("Error al obtener los expedientes", 500);
     res.status(error.status_code).json(error);
   }
 };
@@ -159,7 +159,7 @@ export const getExpedinetController = async (
 
     if (!expedientGeted) {
       const error = errorResponse(
-        "It was not possible to find the expedient.",
+        "No fue posible encontrar el expediente.",
         400
       );
       res.status(error.status_code).json(error);
@@ -168,12 +168,12 @@ export const getExpedinetController = async (
 
     const success = successResponse(
       expedientGeted,
-      "Expedient geted successfuly"
+      "Expediente obtenido correctamente"
     );
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error trying to get the expedient", 500);
+    const error = errorResponse("Error al obtener el expediente", 500);
     res.status(error.status_code).json(error);
   }
 };
