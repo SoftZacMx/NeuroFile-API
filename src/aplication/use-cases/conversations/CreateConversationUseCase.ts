@@ -76,7 +76,11 @@ export class CreateConversationUseCase {
       record_id: recordId,
       user_id: userId,
     });
-
+    console.log(
+      "[CreateConversationUseCase] Conversación creada (recordId). id=%s record_id=%s",
+      conversation.id,
+      conversation.record_id
+    );
     return {
       conversationId: conversation.id,
       startedAt: conversation.started_at,
@@ -111,7 +115,11 @@ export class CreateConversationUseCase {
       record_id: record.id,
       user_id: userId,
     });
-
+    console.log(
+      "[CreateConversationUseCase] Conversación creada (patientId). conversationId=%s recordId=%s",
+      conversation.id,
+      record.id
+    );
     return {
       conversationId: conversation.id,
       startedAt: conversation.started_at,

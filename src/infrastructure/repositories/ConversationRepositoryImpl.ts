@@ -20,6 +20,13 @@ export class ConversationRepositoryImpl implements IConversationRepository {
     });
   }
 
+  async getByIdWithRecord(id: number) {
+    return prisma.conversation.findUnique({
+      where: { id },
+      include: { record: { select: { patient_id: true } } },
+    });
+  }
+
   async setEndedAt(id: number) {
     return prisma.conversation.update({
       where: { id },
@@ -44,6 +51,13 @@ export class ConversationRepositoryImpl implements IConversationRepository {
         full_transcription: fullTranscription,
         transcription_status: "transcribed",
       },
+    });
+  }
+
+  async setProcessedAt(id: number) {
+    return prisma.conversation.update({
+      where: { id },
+      data: { processed_at: new Date() },
     });
   }
 }

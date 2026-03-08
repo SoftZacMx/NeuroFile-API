@@ -109,6 +109,11 @@ export const createConversationController = async (
       };
     if (result.recordId != null) payload.recordId = result.recordId;
 
+    console.log(
+      "[api] POST /conversations respuesta. conversationId=%s recordId=%s",
+      payload.conversationId,
+      payload.recordId ?? "(n/a)"
+    );
     const success = successResponse(payload, "Conversación creada");
     res.status(201).json(success);
   } catch (err) {

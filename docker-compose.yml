@@ -64,6 +64,26 @@ services:
       sqs-init:
         condition: service_completed_successfully
 
+  # Worker: consume neurofile-summarize-map; LLM mapea transcripción a expediente, guarda ExpedientDraft (Fase 6)
+  worker-summarize-map:
+    build: .
+    command: ["node", "dist/src/workers/run-summarize-map-worker.js"]
+    environment:
+      DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
+      SQS_ENDPOINT: http://localstack:4566
+      SQS_QUEUE_SUMMARIZE_MAP: neurofile-summarize-map
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+      sqs-init:
+        condition: service_completed_successfully
+
   mysql:
     image: mysql:8.0
     environment:
@@ -116,6 +136,20 @@ services:
     environment:
       SERVICES: sqs
       DEBUG: "0"
+
+  # UI para ver colas y mensajes SQS (LocalStack). Abrir http://localhost:3999
+  sqs-admin:
+    image: pacovk/sqs-admin:latest
+    ports:
+      - "3999:3999"
+    environment:
+      SQS_ENDPOINT_URL: ${SQS_ENDPOINT_URL:-http://localstack:4566}
+      SQS_AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+    depends_on:
+      - localstack
 
   # Crea las 3 colas SQS en LocalStack al arrancar
   # Endpoint: en compose local usar http://localstack:4566 (por defecto). En QA/prod o otro host, definir SQS_INIT_ENDPOINT en .env

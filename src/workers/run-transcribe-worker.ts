@@ -12,6 +12,7 @@ import { WhisperServiceImpl } from "../infrastructure/services/WhisperServiceImp
 import { WhisperLocalServiceImpl } from "../infrastructure/services/WhisperLocalServiceImpl";
 import type { IWhisperService } from "../domain/services/IWhisperService";
 import { GetFragmentAudioUseCase } from "../aplication/use-cases/transcription/GetFragmentAudioUseCase";
+import { concatWebmToMp3 } from "../infrastructure/services/AudioConversion";
 import {
   runTranscribeConsumerLoop,
   type TranscribeMessagePayload,
@@ -85,8 +86,8 @@ async function handleTranscribeMessage(
     return false;
   }
 
-  const transcriptionParts: string[] = [];
-
+  // Descargar todos los fragmentos en orden (solo el primero es WebM completo; el resto son continuaciones)
+  const buffers: Buffer[] = [];
   for (const fragment of fragments) {
     const audioResult = await getFragmentAudioUseCase.execute(fragment.s3_key);
     if ("error" in audioResult) {
@@ -96,62 +97,51 @@ async function handleTranscribeMessage(
         fragment.s3_key,
         formatError(audioResult.error)
       );
-      await audioFragmentRepository.updateTranscription({
-        conversation_id: conversationId,
-        sequence_index: fragment.sequence_index,
-        transcription_text: "",
-        status: "failed",
-      });
       await conversationRepository.setTranscriptionStatus(
         conversationId,
         "failed"
       );
       return false;
     }
+    buffers.push(audioResult.buffer);
+  }
 
-    let text: string;
-    try {
-      text = await whisperService.transcribe(audioResult.buffer, {
-        filename: fragment.s3_key.split("/").pop() || "audio.webm",
-      });
-    } catch (err) {
-      console.error(
-        "[worker:transcribe] Error Whisper en fragmento. conversationId=%s sequence_index=%s s3_key=%s error=%s",
-        conversationId,
-        fragment.sequence_index,
-        fragment.s3_key,
-        formatError(err)
-      );
-      await audioFragmentRepository.updateTranscription({
-        conversation_id: conversationId,
-        sequence_index: fragment.sequence_index,
-        transcription_text: "",
-        status: "failed",
-      });
-      await conversationRepository.setTranscriptionStatus(
-        conversationId,
-        "failed"
-      );
-      return false;
-    }
-
-    console.log(
-      "[worker:transcribe] Whisper OK. conversationId=%s sequence_index=%s",
+  let fullTranscription: string;
+  try {
+    const mp3Buffer = await concatWebmToMp3(buffers);
+    fullTranscription = await whisperService.transcribe(mp3Buffer, {
+      filename: "audio.mp3",
+    });
+  } catch (err) {
+    console.error(
+      "[worker:transcribe] Error al concatenar/convertir o transcribir. conversationId=%s error=%s",
       conversationId,
-      fragment.sequence_index
+      formatError(err)
     );
+    await conversationRepository.setTranscriptionStatus(
+      conversationId,
+      "failed"
+    );
+    return false;
+  }
+
+  console.log(
+    "[worker:transcribe] Whisper OK (audio concatenado). conversationId=%s fragmentos=%s",
+    conversationId,
+    buffers.length
+  );
+
+  for (const fragment of fragments) {
     await audioFragmentRepository.updateTranscription({
       conversation_id: conversationId,
       sequence_index: fragment.sequence_index,
-      transcription_text: text,
+      transcription_text: "",
       status: "transcribed",
     });
-    transcriptionParts.push(text);
   }
 
-  // Fase 5.5: concatenar, guardar full_transcription y encolar summarize-map
+  // Fase 5.5: guardar full_transcription y encolar summarize-map
   try {
-    const fullTranscription = transcriptionParts.join("\n\n");
     await conversationRepository.setFullTranscription(
       conversationId,
       fullTranscription
@@ -169,7 +159,7 @@ async function handleTranscribeMessage(
     console.log(
       "[worker:transcribe] Transcripción completada. conversationId=%s fragmentos=%s",
       conversationId,
-      transcriptionParts.length
+      buffers.length
     );
   } catch (err) {
     console.error(
