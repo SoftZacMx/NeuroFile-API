@@ -1,4 +1,4 @@
-import type { Conversation } from "@prisma/client";
+import type { Conversation, ExpedientDraft } from "@prisma/client";
 
 /**
  * Repositorio de conversaciones (Fase 2.3).
@@ -9,6 +9,16 @@ export interface IConversationRepository {
    * Crea una conversación asociada a un expediente (record) y usuario.
    */
   create(data: { record_id: number; user_id: number }): Promise<Conversation>;
+
+  /**
+   * Lista conversaciones del expediente ordenadas por started_at desc.
+   */
+  listByRecordId(record_id: number, limit?: number): Promise<Conversation[]>;
+
+  /**
+   * Última conversación del expediente con expedientDraft (para contexto MCP/IA).
+   */
+  getLastByRecordId(record_id: number): Promise<(Conversation & { expedientDraft: ExpedientDraft | null }) | null>;
 
   /**
    * Obtiene una conversación por id, o null si no existe.

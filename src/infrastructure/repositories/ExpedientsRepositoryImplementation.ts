@@ -202,4 +202,13 @@ export class ExpedientRepositoryImpl {
       return mapPrismaError(error)  ;
     }
   }
+
+  async getRecordIdByPatientId(patientId: number): Promise<number | null> {
+    const record = await prisma.record.findFirst({
+      where: { patient_id: patientId },
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    return record?.id ?? null;
+  }
 }

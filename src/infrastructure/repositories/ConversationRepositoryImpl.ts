@@ -14,6 +14,22 @@ export class ConversationRepositoryImpl implements IConversationRepository {
     });
   }
 
+  async listByRecordId(record_id: number, limit = 20) {
+    return prisma.conversation.findMany({
+      where: { record_id },
+      orderBy: { started_at: "desc" },
+      take: limit,
+    });
+  }
+
+  async getLastByRecordId(record_id: number) {
+    return prisma.conversation.findFirst({
+      where: { record_id },
+      orderBy: { started_at: "desc" },
+      include: { expedientDraft: true },
+    });
+  }
+
   async getById(id: number) {
     return prisma.conversation.findUnique({
       where: { id },
