@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { errorResponse } from "../helpers/response.helper";
+import { errorResponse, forbiddenResponse } from "../helpers/response.helper";
 import { ForbiddenError } from "../../domain/errors/ForbiddenError";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -16,7 +16,7 @@ export function globalErrorHandler(
   _next: NextFunction
 ): void {
   if (err instanceof ForbiddenError) {
-    res.status(403).json({ result: false, message: err.message });
+    res.status(403).json(forbiddenResponse(err.message));
     return;
   }
   const statusCode = err.statusCode ?? err.status ?? 500;

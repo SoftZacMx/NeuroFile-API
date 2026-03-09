@@ -4,6 +4,22 @@ Documentación de las tres colas y sus Dead Letter Queues (DLQ) en el flujo audi
 
 ---
 
+## MVP: esencial (DLQ + visibility timeout)
+
+Para el MVP son obligatorios:
+
+1. **No reintentos infinitos:** mensajes inválidos o que fallen el procesamiento no deben reintentarse para siempre. Se configuran **DLQ + redrive policy** (`maxReceiveCount=5`): tras 5 intentos sin borrar el mensaje, SQS lo mueve a la DLQ.
+2. **Evitar doble procesamiento por timeout:** **visibility timeout** mayor que el tiempo real de procesamiento para que el mensaje no vuelva a estar disponible mientras el worker aún lo procesa.
+
+**Estado:** ya aplicado.
+
+- **LocalStack / desarrollo:** `docker-compose` define el servicio `sqs-init`, que crea las 3 DLQs, las 3 colas principales con `VisibilityTimeout` (300, 1800, 600 segundos) y `RedrivePolicy` (maxReceiveCount=5). Al hacer `docker compose up`, queda listo.
+- **AWS real:** ejecutar `./scripts/create-sqs-queues.sh us-east-1` (o la región que uses). El script crea las DLQs y las colas principales con los mismos atributos. Opcional: `SQS_MAX_RECEIVE_COUNT=3` para menos reintentos.
+
+Los workers no borran el mensaje cuando el payload es inválido o el procesamiento falla; así SQS reintenta hasta `maxReceiveCount` y luego lo envía a la DLQ.
+
+---
+
 ## Nombres de colas
 
 | Cola | Uso |
@@ -64,3 +80,18 @@ Crear las colas y DLQs con el script del proyecto (crea las 3 DLQs y las 3 colas
 Opcional: `SQS_MAX_RECEIVE_COUNT=3` para usar 3 reintentos en lugar de 5. Para LocalStack/desarrollo con endpoint: `SQS_ENDPOINT=http://localhost:4566 ./scripts/create-sqs-queues.sh us-east-1`.
 
 Luego obtén las URLs de cada cola (`aws sqs get-queue-url --queue-name <nombre> --region us-east-1`) y configúralas en `.env`. Las DLQs solo son necesarias en .env si el código las usa para monitoreo o reproceso.
+
+---
+
+## Worker DLQ (`worker:dlq`)
+
+Existe un worker que consume las tres DLQs y evita que los mensajes se queden ahí indefinidamente:
+
+- **Ejecución:** `npm run worker:dlq`
+- **Comportamiento:** Por cada DLQ (audio-fragments, transcribe-conversation, summarize-map):
+  - Recibe mensajes con atributos (`MessageAttributeNames: ['All']`).
+  - Si el body **no se puede parsear** (formato inválido): se elimina de la DLQ y se registra en log.
+  - Si se parsea: se lee el atributo `dlq_resend_count` (reintentos desde DLQ). Si es **≥ 2** (máximo configurado): se elimina de la DLQ y se registra "máximo de reintentos".
+  - En caso contrario: se **reenvía el mismo body** a la cola principal con `messageAttributes.dlq_resend_count = (actual + 1)`, y luego se elimina el mensaje de la DLQ.
+
+Así los mensajes válidos tienen hasta 2 reintentos extra desde la DLQ hacia la cola principal; los no parseables o que superen el límite se descartan para no reintentar indefinidamente.

@@ -3,7 +3,9 @@ import { CreateClinicalNoteUseCase } from "../../aplication/use-cases/clinical_n
 import {
   errorResponse,
   successResponse,
+  forbiddenResponse,
 } from "../../shared/helpers/response.helper";
+import { Messages, Codes } from "../../shared/constants/messages";
 import { Request, Response } from "express";
 import { RequestWithUser } from "../../shared/types/RequestWithUser";
 import { IPrismaError } from "../../domain/errors/IPrismaErrors";
@@ -29,22 +31,20 @@ export const createClinicalNoteController = async (
 
     if ((newClinicalNote as IPrismaError).code) {
       const error = errorResponse(
-        "No pudo ser creada la nota",
+        Messages.clinicalNote.createError,
         500,
-        newClinicalNote
+        newClinicalNote,
+        Codes.CREATE_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      newClinicalNote,
-      "Nota clinica creado con éxito"
-    );
+    const success = successResponse(newClinicalNote, Messages.clinicalNote.createSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al intentar crear la nota clinica", 500);
+    const error = errorResponse(Messages.clinicalNote.createFail, 500, undefined, Codes.CREATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -64,29 +64,24 @@ export const updateClinicalNoteController = async (
 
     if ((updatedClinicalNote as IPrismaError).code) {
       const error = errorResponse(
-        "No pudo ser actualizda la nota",
+        Messages.clinicalNote.updateError,
         500,
-        updatedClinicalNote
+        updatedClinicalNote,
+        Codes.UPDATE_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      updatedClinicalNote,
-      "Nota clinica actualizada con éxito"
-    );
+    const success = successResponse(updatedClinicalNote, Messages.clinicalNote.updateSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse(
-      "Error al intentar actualizar la nota clinica",
-      500
-    );
+    const error = errorResponse(Messages.clinicalNote.updateFail, 500, undefined, Codes.UPDATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -105,29 +100,24 @@ export const deleteClinicalNoteController = async (
 
     if ((removeClinicalNote as IPrismaError).code) {
       const error = errorResponse(
-        "No pudo ser eliminada la nota",
+        Messages.clinicalNote.deleteError,
         500,
-        removeClinicalNote
+        removeClinicalNote,
+        Codes.DELETE_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      removeClinicalNote,
-      "Nota clinica eliminada con éxito"
-    );
+    const success = successResponse(removeClinicalNote, Messages.clinicalNote.deleteSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse(
-      "Error al intentar eliminar la nota clinica",
-      500
-    );
+    const error = errorResponse(Messages.clinicalNote.deleteFail, 500, undefined, Codes.DELETE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -140,7 +130,7 @@ export const getClinicalNotesController = async (
     const recordIdParam = req.query.record_id ?? req.body?.record_id;
     const recordId = recordIdParam != null ? parseInt(String(recordIdParam), 10) : NaN;
     if (Number.isNaN(recordId)) {
-      const error = errorResponse("record_id es requerido", 400);
+      const error = errorResponse(Messages.clinicalNote.recordIdRequired, 400, undefined, Codes.VALIDATION_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
@@ -160,25 +150,20 @@ export const getClinicalNotesController = async (
 
     if ((clinicalNotes as IPrismaError).code) {
       const error = errorResponse(
-        "No se pudieron obtener las notas clinicas",
+        Messages.clinicalNote.listError,
         500,
-        clinicalNotes
+        clinicalNotes,
+        Codes.LIST_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      clinicalNotes,
-      "Notas clinica encontradas con éxito"
-    );
+    const success = successResponse(clinicalNotes, Messages.clinicalNote.listSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse(
-      "Error al intentar obtener las notas clinica",
-      500
-    );
+    const error = errorResponse(Messages.clinicalNote.listFail, 500, undefined, Codes.LIST_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -194,29 +179,24 @@ export const getClinicalNoteController = async (
 
     if ((clinicalNote as IPrismaError).code) {
       const error = errorResponse(
-        "No se pudo obtener las nota clinicas",
+        Messages.clinicalNote.getError,
         500,
-        clinicalNote
+        clinicalNote,
+        Codes.GET_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      clinicalNote,
-      "Nota clinica encontrada con éxito"
-    );
+    const success = successResponse(clinicalNote, Messages.clinicalNote.getSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse(
-      "Error al intentar obtener la nota clinica",
-      500
-    );
+    const error = errorResponse(Messages.clinicalNote.getFail, 500, undefined, Codes.GET_ERROR);
     res.status(error.status_code).json(error);
   }
 };

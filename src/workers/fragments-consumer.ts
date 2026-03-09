@@ -62,6 +62,8 @@ export type ProcessFragmentHandler = (
  * Ejecuta el bucle de consumo de la cola neurofile-audio-fragments (long poll).
  * Por cada mensaje: extrae conversationId, sequenceIndex, recordedAt, s3Key; llama a onMessage.
  * Si onMessage devuelve true, borra el mensaje de la cola; si false o error, no borra (reintento).
+ * Mensajes inválidos (payload mal formado) no se borran: SQS los reintenta hasta maxReceiveCount
+ * y luego los mueve a la DLQ (redrive policy), evitando reintentos infinitos.
  */
 export async function runFragmentsConsumerLoop(
   sqsService: ISqsService,
@@ -101,7 +103,7 @@ export async function runFragmentsConsumerLoop(
 
         if (!payload) {
           console.error(
-            "[worker:fragments] Mensaje con formato inválido, se deja en cola:",
+            "[worker:fragments] Mensaje con formato inválido (no se borra; tras maxReceiveCount irá a DLQ):",
             message.messageId
           );
           continue;

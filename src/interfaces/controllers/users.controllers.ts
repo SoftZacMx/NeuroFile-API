@@ -4,7 +4,9 @@ import { UserRepositoryImpl } from "../../infrastructure/repositories/UserReposi
 import {
   successResponse,
   errorResponse,
+  forbiddenResponse,
 } from "../../shared/helpers/response.helper";
+import { Messages, Codes } from "../../shared/constants/messages";
 import { IUserRepository } from "../../domain/repositories/IUserRepository";
 import { UpdateUserUseCase } from "../../aplication/use-cases/users/UpdateUserUseCase";
 import { DeleteUserUseCase } from "../../aplication/use-cases/users/DeleteUserUseCase";
@@ -33,17 +35,16 @@ export const createUserController = async (
     console.log("user creation user", newUser);
 
     if (newUser == null) {
-      const error = errorResponse('No pudo ser creado el usuario', 500);
+      const error = errorResponse(Messages.user.createError, 500, undefined, Codes.CREATE_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(newUser, "Usuario creado con éxito");
+    const success = successResponse(newUser, Messages.user.createSuccess);
     res.status(success.status_code).json(success);
-    
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al intentar crear el usario", 500);
+    const error = errorResponse(Messages.user.createFail, 500, undefined, Codes.CREATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -58,23 +59,20 @@ export const updateUserController = async (
     const userUpdated = await updateUserUseCase.execute(req.body, user_id, currentUserId);
 
     if (!userUpdated) {
-      const error = errorResponse(
-        "No fue posible actualizar el usuario.",
-        400
-      );
+      const error = errorResponse(Messages.user.updateError, 400, undefined, Codes.UPDATE_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(userUpdated, "User updated successfuly");
+    const success = successResponse(userUpdated, Messages.user.updateSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al actualizar el usuario", 500);
+    const error = errorResponse(Messages.user.updateFail, 500, undefined, Codes.UPDATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -89,23 +87,20 @@ export const deleteUserController = async (
     const userDeleted = await deleteUserUseCase.execute(user_id, currentUserId);
 
     if (!userDeleted) {
-      const error = errorResponse(
-        "No fue posible eliminar el usuario.",
-        400
-      );
+      const error = errorResponse(Messages.user.deleteError, 400, undefined, Codes.DELETE_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(userDeleted, "User deleted successfuly");
+    const success = successResponse(userDeleted, Messages.user.deleteSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al eliminar el usuario", 500);
+    const error = errorResponse(Messages.user.deleteFail, 500, undefined, Codes.DELETE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -118,16 +113,16 @@ export const getUsersController = async (
     const usersGeted = await getUsersUseCase.execute();
 
     if (!usersGeted) {
-      const error = errorResponse("No fue posible obtener los usuarios.", 400);
+      const error = errorResponse(Messages.user.listError, 400, undefined, Codes.LIST_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(usersGeted, "Users geted successfuly");
+    const success = successResponse(usersGeted, Messages.user.listSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al obtener los usuarios", 500);
+    const error = errorResponse(Messages.user.listFail, 500, undefined, Codes.LIST_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -142,20 +137,20 @@ export const getUserController = async (
     const userGeted = await getUserUseCase.execute(user_id, currentUserId);
 
     if (!userGeted) {
-      const error = errorResponse("No fue posible encontrar el usuario.", 400);
+      const error = errorResponse(Messages.user.notFound, 400, undefined, Codes.NOT_FOUND);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(userGeted, "Users geted successfuly");
+    const success = successResponse(userGeted, Messages.user.getSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al obtener el usuario", 500);
+    const error = errorResponse(Messages.user.getFail, 500, undefined, Codes.GET_ERROR);
     res.status(error.status_code).json(error);
   }
 };

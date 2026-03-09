@@ -14,7 +14,8 @@
     "db:seed": "prisma db seed",
     "worker:fragments": "ts-node src/workers/run-fragments-worker.ts",
     "worker:transcribe": "ts-node src/workers/run-transcribe-worker.ts",
-    "worker:summarize-map": "ts-node src/workers/run-summarize-map-worker.ts"
+    "worker:summarize-map": "ts-node src/workers/run-summarize-map-worker.ts",
+    "worker:dlq": "ts-node src/workers/run-dlq-worker.ts"
   },
   "prisma": {
     "schema": "src/infrastructure/database/prisma/schema.prisma",

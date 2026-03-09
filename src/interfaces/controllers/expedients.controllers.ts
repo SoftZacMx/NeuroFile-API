@@ -3,7 +3,9 @@ import { RequestWithUser } from "../../shared/types/RequestWithUser";
 import {
   successResponse,
   errorResponse,
+  forbiddenResponse,
 } from "../../shared/helpers/response.helper";
+import { Messages, Codes } from "../../shared/constants/messages";
 import { CreateExpedientUseCase } from "../../aplication/use-cases/expedients/CreateExpedientUseCase";
 import { ExpedientRepositoryImpl } from "../../infrastructure/repositories/ExpedientsRepositoryImplementation";
 import { UpdateExpedientUseCase } from "../../aplication/use-cases/expedients/UpdateExpedientUseCase";
@@ -33,23 +35,20 @@ export const createExpedientController = async (
 
     if ((newExpedient as IPrismaError).code) {
       const error = errorResponse(
-        "No pudo ser creado el expediente",
+        Messages.expedient.createError,
         500,
-        newExpedient
+        newExpedient,
+        Codes.CREATE_ERROR
       );
       res.status(error.status_code).json(error);
-      return
+      return;
     }
 
-    const success = successResponse(
-      newExpedient,
-      "Expediente creado con éxito"
-    );
+    const success = successResponse(newExpedient, Messages.expedient.createSuccess);
     res.status(success.status_code).json(success);
-    return
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al intentar crear el expediente", 500);
+    const error = errorResponse(Messages.expedient.createFail, 500, undefined, Codes.CREATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -69,26 +68,24 @@ export const updateExpedientController = async (
 
     if ((expedientUpdated as IPrismaError).code) {
       const error = errorResponse(
-        "No pudo ser actualizado el expediente",
+        Messages.expedient.updateError,
         500,
-        expedientUpdated
+        expedientUpdated,
+        Codes.UPDATE_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      expedientUpdated,
-      "Expediente actualizado correctamente"
-    );
+    const success = successResponse(expedientUpdated, Messages.expedient.updateSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al actualizar el expediente", 500);
+    const error = errorResponse(Messages.expedient.updateFail, 500, undefined, Codes.UPDATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -104,25 +101,23 @@ export const deleteExpedientController = async (
 
     if ((expedientDeleted as IPrismaError).code) {
       const error = errorResponse(
-        "No pudo ser eliminado el expediente",
+        Messages.expedient.deleteError,
         500,
-        expedientDeleted
+        expedientDeleted,
+        Codes.DELETE_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
-    const success = successResponse(
-      expedientDeleted,
-      "Expediente eliminado correctamente"
-    );
+    const success = successResponse(expedientDeleted, Messages.expedient.deleteSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al eliminar el expediente", 500);
+    const error = errorResponse(Messages.expedient.deleteFail, 500, undefined, Codes.DELETE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -136,22 +131,20 @@ export const getExpedientsController = async (
 
     if ((expedientsGeted as IPrismaError).code) {
       const error = errorResponse(
-        "No se pudieron obtener los expedientes",
+        Messages.expedient.listError,
         500,
-        expedientsGeted
+        expedientsGeted,
+        Codes.LIST_ERROR
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      expedientsGeted,
-      "Expedientes obtenidos correctamente"
-    );
+    const success = successResponse(expedientsGeted, Messages.expedient.listSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al obtener los expedientes", 500);
+    const error = errorResponse(Messages.expedient.listFail, 500, undefined, Codes.LIST_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -170,25 +163,24 @@ export const getExpedinetController = async (
 
     if (!expedientGeted || (expedientGeted as IPrismaError).code) {
       const error = errorResponse(
-        "No fue posible encontrar el expediente.",
-        404
+        Messages.expedient.notFound,
+        404,
+        undefined,
+        Codes.NOT_FOUND
       );
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      expedientGeted,
-      "Expediente obtenido correctamente"
-    );
+    const success = successResponse(expedientGeted, Messages.expedient.getSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al obtener el expediente", 500);
+    const error = errorResponse(Messages.expedient.getFail, 500, undefined, Codes.GET_ERROR);
     res.status(error.status_code).json(error);
   }
 };

@@ -3,6 +3,7 @@ import { UserRepositoryImpl } from "../../infrastructure/repositories/UserReposi
 import { VerifyUserUseCase } from "../../aplication/use-cases/auth/VerfifyUserUseCase";
 import { AuthUseCase } from "../../aplication/use-cases/auth/AuthUseCase";
 import { errorResponse, successResponse } from "../../shared/helpers/response.helper";
+import { Messages, Codes } from "../../shared/constants/messages";
 const userRepository = new UserRepositoryImpl();
 
 const verifyUseCase = new VerifyUserUseCase(userRepository);
@@ -19,16 +20,17 @@ export const loginController = async (req: Request, res: Response): Promise<void
 
 
     if (!token) {
-      const error = errorResponse("No se pudo generar el token", 500);
+      const error = errorResponse(Messages.auth.tokenError, 500, undefined, Codes.CREATE_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(token, 'Login successful');
+    const success = successResponse(token, Messages.auth.loginSuccess);
     res.status(success.status_code).json(success);
-  } catch (error: any) {
-    console.log('Auth - login - error: ', error);
-    const error_response = errorResponse(error?.message ?? "Error en login", 500);
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    console.log("Auth - login - error: ", err);
+    const error_response = errorResponse(err?.message ?? Messages.auth.loginError, 500, undefined, Codes.CREATE_ERROR);
     res.status(error_response.status_code).json(error_response);
   }
 };

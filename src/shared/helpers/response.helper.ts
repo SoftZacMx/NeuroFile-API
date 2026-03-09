@@ -1,4 +1,5 @@
 import { Res } from "../types/response.interface";
+import { Codes, Messages } from "../constants/messages";
 
 export const successResponse = <T>(data: T, message = "Éxito"): Res<T> => ({
   error: false,
@@ -27,4 +28,11 @@ export const errorResponse = <T>(
   message,
   status_code,
   ...(code ? { code } : {}),
+});
+
+/** Respuesta 403 estándar (ownership). Acepta mensaje opcional (p. ej. err.message). */
+export const forbiddenResponse = (message?: string) => ({
+  result: false,
+  code: Codes.FORBIDDEN,
+  message: message ?? Messages.common.forbidden,
 });

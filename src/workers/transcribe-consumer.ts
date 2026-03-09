@@ -43,6 +43,7 @@ export type ProcessTranscribeHandler = (
  * Ejecuta el bucle de consumo de la cola neurofile-transcribe-conversation (long poll).
  * Por cada mensaje: extrae conversationId; llama a onMessage.
  * Si onMessage devuelve true, borra el mensaje de la cola; si false o error, no borra (reintento).
+ * Mensajes inválidos no se borran: tras maxReceiveCount la redrive policy los mueve a la DLQ.
  */
 export async function runTranscribeConsumerLoop(
   sqsService: ISqsService,
@@ -82,7 +83,7 @@ export async function runTranscribeConsumerLoop(
 
         if (!payload) {
           console.error(
-            "[worker:transcribe] Mensaje con formato inválido, se deja en cola. messageId=%s body=%s",
+            "[worker:transcribe] Mensaje con formato inválido (no se borra; tras maxReceiveCount irá a DLQ). messageId=%s body=%s",
             message.messageId,
             message.body
           );

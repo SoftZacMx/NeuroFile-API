@@ -4,7 +4,9 @@ import { UserRepositoryImpl } from "../../infrastructure/repositories/UserReposi
 import {
   successResponse,
   errorResponse,
+  forbiddenResponse,
 } from "../../shared/helpers/response.helper";
+import { Messages, Codes } from "../../shared/constants/messages";
 import { IUserRepository } from "../../domain/repositories/IUserRepository";
 import { UpdateUserUseCase } from "../../aplication/use-cases/users/UpdateUserUseCase";
 import { DeleteUserUseCase } from "../../aplication/use-cases/users/DeleteUserUseCase";
@@ -44,16 +46,16 @@ export const createPatientController = async (
     let newPatient = await createUserUseCase.execute(req.body);
 
     if (newPatient == null) {
-      const error = errorResponse("No pudo ser creado el paciente", 500);
+      const error = errorResponse(Messages.patient.createError, 500, undefined, Codes.CREATE_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(newPatient, "Paciente creado con éxito");
+    const success = successResponse(newPatient, Messages.patient.createSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al intentar crear el paciente", 500);
+    const error = errorResponse(Messages.patient.createFail, 500, undefined, Codes.CREATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -67,19 +69,19 @@ export const updatePatientController = async (
     const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const userUpdated = await updatePatientUseCase.execute(req.body, patient_id, currentUserId);
     if (!userUpdated || isPrismaError(userUpdated)) {
-      const error = errorResponse("Paciente no encontrado o no fue posible actualizar.", 404);
+      const error = errorResponse(Messages.patient.updateError, 404, undefined, Codes.NOT_FOUND);
       res.status(error.status_code).json(error);
       return;
     }
-    const success = successResponse(userUpdated, "Paciente actualizado correctamente");
+    const success = successResponse(userUpdated, Messages.patient.updateSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al actualizar el paciente", 500);
+    const error = errorResponse(Messages.patient.updateFail, 500, undefined, Codes.UPDATE_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -90,32 +92,24 @@ export const getPatientsController = async (
 ): Promise<void> => {
   try {
     if (!req.user?.sub) {
-      const error = errorResponse("No autorizado para listar pacientes.", 401);
+      const error = errorResponse(Messages.patient.listUnauthorized, 401, undefined, Codes.UNAUTHORIZED);
       res.status(error.status_code).json(error);
       return;
     }
-    const loggedUserId = parseInt(req.user.sub, 10);
-    const isAdmin = req.user.role === "admin";
-    const filterUserId = isAdmin ? null : loggedUserId;
-    const patientsGated = await getPatientsUseCase.execute(filterUserId);
+    const currentUserId = parseInt(req.user.sub, 10);
+    const patientsGated = await getPatientsUseCase.execute(currentUserId);
 
     if (!patientsGated) {
-      const error = errorResponse(
-        "No fue posible obtener los pacientes.",
-        400
-      );
+      const error = errorResponse(Messages.patient.listError, 400, undefined, Codes.LIST_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(
-      patientsGated,
-      "Pacientes obtenidos correctamente"
-    );
+    const success = successResponse(patientsGated, Messages.patient.listSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     console.error(err);
-    const error = errorResponse("Error al obtener los pacientes", 500);
+    const error = errorResponse(Messages.patient.listFail, 500, undefined, Codes.LIST_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -130,20 +124,20 @@ export const getPatientController = async (
     const patient = await getPatientUseCase.execute(patient_id, currentUserId);
 
     if (!patient || isPrismaError(patient)) {
-      const error = errorResponse("Paciente no encontrado.", 404);
+      const error = errorResponse(Messages.patient.notFound, 404, undefined, Codes.NOT_FOUND);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(patient, "Paciente encontrado");
+    const success = successResponse(patient, Messages.patient.getSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al obtener el paciente", 500);
+    const error = errorResponse(Messages.patient.getFail, 500, undefined, Codes.GET_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -157,20 +151,20 @@ export const getPatientSummaryController = async (
     const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const summary = await getPatientSummaryUseCase.execute(parseInt(patient_id, 10), currentUserId);
     if (isPrismaError(summary)) {
-      const error = errorResponse("Error al obtener el resumen.", 500);
+      const error = errorResponse(Messages.patient.summaryError, 500, undefined, Codes.GET_ERROR);
       res.status(error.status_code).json(error);
       return;
     }
 
-    const success = successResponse(summary, "Resumen del paciente");
+    const success = successResponse(summary, Messages.patient.summarySuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al obtener el resumen del paciente", 500);
+    const error = errorResponse(Messages.patient.summaryFail, 500, undefined, Codes.GET_ERROR);
     res.status(error.status_code).json(error);
   }
 };
@@ -184,19 +178,19 @@ export const deletePatientController = async (
     const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const patientDelete = await deletePatientUseCase.execute(patient_id, currentUserId);
     if (!patientDelete || isPrismaError(patientDelete)) {
-      const error = errorResponse("Paciente no encontrado o no fue posible eliminar.", 404);
+      const error = errorResponse(Messages.patient.deleteError, 404, undefined, Codes.NOT_FOUND);
       res.status(error.status_code).json(error);
       return;
     }
-    const success = successResponse(patientDelete, "Paciente eliminado correctamente");
+    const success = successResponse(patientDelete, Messages.patient.deleteSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
     if (err instanceof ForbiddenError) {
-      res.status(403).json({ result: false, message: err.message });
+      res.status(403).json(forbiddenResponse(err.message));
       return;
     }
     console.error(err);
-    const error = errorResponse("Error al eliminar el paciente", 500);
+    const error = errorResponse(Messages.patient.deleteFail, 500, undefined, Codes.DELETE_ERROR);
     res.status(error.status_code).json(error);
   }
 };

@@ -13,6 +13,26 @@ const deletedIds = new Set<number>();
 jest.mock("../../src/infrastructure/database/prisma/prisma.client", () => ({
   __esModule: true,
   default: {
+    patient: {
+      findFirst: jest.fn().mockImplementation((args: { where: { id: number } }) => {
+        if (args.where.id === PATIENT_ID) {
+          return Promise.resolve({
+            id: PATIENT_ID,
+            user_id: OWNER_USER_ID,
+            first_name: "P",
+            last_name: "P",
+            second_last_name: null,
+            age: "25",
+            gender: "M",
+            address: null,
+            is_active: true,
+            occupation: "Ing",
+            phone: "5550000000",
+          });
+        }
+        return Promise.resolve(null);
+      }),
+    },
     appointment: {
       create: jest.fn().mockImplementation((args: { data: Record<string, unknown> }) => {
         const id = nextId++;

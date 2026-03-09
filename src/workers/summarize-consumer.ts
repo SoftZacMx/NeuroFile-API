@@ -38,6 +38,7 @@ export type ProcessSummarizeHandler = (
 
 /**
  * Bucle de consumo de la cola neurofile-summarize-map.
+ * Mensajes inválidos no se borran: tras maxReceiveCount la redrive policy los mueve a la DLQ.
  */
 export async function runSummarizeConsumerLoop(
   sqsService: ISqsService,
@@ -75,7 +76,7 @@ export async function runSummarizeConsumerLoop(
         const payload = extractSummarizePayload(message.body);
         if (!payload) {
           console.error(
-            "[worker:summarize-map] Mensaje con formato inválido, se deja en cola. messageId=%s body=%s",
+            "[worker:summarize-map] Mensaje con formato inválido (no se borra; tras maxReceiveCount irá a DLQ). messageId=%s body=%s",
             message.messageId,
             message.body
           );
