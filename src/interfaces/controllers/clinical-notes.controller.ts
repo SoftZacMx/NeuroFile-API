@@ -5,7 +5,9 @@ import {
   successResponse,
 } from "../../shared/helpers/response.helper";
 import { Request, Response } from "express";
+import { RequestWithUser } from "../../shared/types/RequestWithUser";
 import { IPrismaError } from "../../domain/errors/IPrismaErrors";
+import { ForbiddenError } from "../../domain/errors/ForbiddenError";
 import { UpdateClinicalNoteUseCase } from "../../aplication/use-cases/clinical_notes/UpdateClinicalNoteUseCase";
 import { RemoveClinicalNoteUseCase } from "../../aplication/use-cases/clinical_notes/DeleteClinicalNoteUseCase";
 import { GetClinicalNotesUseCase } from "../../aplication/use-cases/clinical_notes/GetClinicalNotesUseCase";
@@ -48,14 +50,16 @@ export const createClinicalNoteController = async (
 };
 
 export const updateClinicalNoteController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { note_id } = req.params;
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const updatedClinicalNote = await updateNoteUseCase.execute(
       req.body,
-      parseInt(note_id)
+      parseInt(note_id),
+      currentUserId
     );
 
     if ((updatedClinicalNote as IPrismaError).code) {
@@ -65,6 +69,7 @@ export const updateClinicalNoteController = async (
         updatedClinicalNote
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -73,6 +78,10 @@ export const updateClinicalNoteController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse(
       "Error al intentar actualizar la nota clinica",
@@ -83,13 +92,15 @@ export const updateClinicalNoteController = async (
 };
 
 export const deleteClinicalNoteController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { note_id } = req.params;
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const removeClinicalNote = await deleteNoteUseCase.execute(
-      parseInt(note_id)
+      parseInt(note_id),
+      currentUserId
     );
 
     if ((removeClinicalNote as IPrismaError).code) {
@@ -99,6 +110,7 @@ export const deleteClinicalNoteController = async (
         removeClinicalNote
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -107,6 +119,10 @@ export const deleteClinicalNoteController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse(
       "Error al intentar eliminar la nota clinica",
@@ -168,14 +184,13 @@ export const getClinicalNotesController = async (
 };
 
 export const getClinicalNoteController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { note_id } = req.params;
-    console.log("note_id", note_id);
-
-    const clinicalNote = await getNoteUseCase.execute(parseInt(note_id));
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
+    const clinicalNote = await getNoteUseCase.execute(parseInt(note_id), currentUserId);
 
     if ((clinicalNote as IPrismaError).code) {
       const error = errorResponse(
@@ -184,6 +199,7 @@ export const getClinicalNoteController = async (
         clinicalNote
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -192,6 +208,10 @@ export const getClinicalNoteController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse(
       "Error al intentar obtener la nota clinica",

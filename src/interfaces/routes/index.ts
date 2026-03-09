@@ -1,36 +1,28 @@
-import {Router} from "express";
-import {readdirSync} from "fs"
+import { Router } from "express";
+import { readdirSync } from "fs";
 
 const PATH_ROUTER = `${__dirname}`;
 const router = Router();
 
+const cleanFileName = (fileName: string) => fileName.split(".").shift() ?? "";
 
-/**
- * 
- * @param fileName 
- * @returns 
- */
-const cleanFileName = (fileName:string) => {
-    const file = fileName.split('.').shift();
-    return file;
-}
+const routeFiles = readdirSync(PATH_ROUTER).filter((fileName) => {
+  const cleanName = cleanFileName(fileName);
+  return cleanName && cleanName !== "index";
+});
 
-readdirSync(PATH_ROUTER).filter((fileName) => {
-    const cleanName = cleanFileName(fileName);
-    if (cleanName !== 'index') {
-        import(`./${cleanName}`).then((moduleRouter) => {
+const routePromises = routeFiles.map((fileName) => {
+  const cleanName = cleanFileName(fileName);
+  return import(`./${cleanName}`)
+    .then((moduleRouter) => {
+      router.use(`/api/${cleanName}`, moduleRouter.router);
+    })
+    .catch((err) => {
+      console.error(`[routes] Error loading route ${cleanName}:`, err);
+    });
+});
 
-            
-            router.use(`/api/${cleanName}`,moduleRouter.router)
-        })
-    }
- 
+/** Esperar a que todas las rutas estén montadas antes de usar la app (evita promesas pendientes en teardown). */
+export const routesReady = Promise.all(routePromises);
 
-
-    
-})
-
-
-
-export {router};
-
+export { router };

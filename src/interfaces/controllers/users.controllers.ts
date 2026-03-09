@@ -10,6 +10,8 @@ import { UpdateUserUseCase } from "../../aplication/use-cases/users/UpdateUserUs
 import { DeleteUserUseCase } from "../../aplication/use-cases/users/DeleteUserUseCase";
 import { GetUsersUseCase } from "../../aplication/use-cases/users/GetUsersUseCase";
 import { GetUserUseCase } from "../../aplication/use-cases/users/GetUserUseCase";
+import { RequestWithUser } from "../../shared/types/RequestWithUser";
+import { ForbiddenError } from "../../domain/errors/ForbiddenError";
 
 const userRepository = new UserRepositoryImpl();
 const createUserUseCase = new CreateUserUseCase(userRepository);
@@ -31,8 +33,9 @@ export const createUserController = async (
     console.log("user creation user", newUser);
 
     if (newUser == null) {
-      const error = errorResponse('No pudo ser creado el usuario',500)
+      const error = errorResponse('No pudo ser creado el usuario', 500);
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(newUser, "Usuario creado con éxito");
@@ -46,12 +49,13 @@ export const createUserController = async (
 };
 
 export const updateUserController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { user_id } = req.params;
-    const userUpdated = await updateUserUseCase.execute(req.body, user_id);
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
+    const userUpdated = await updateUserUseCase.execute(req.body, user_id, currentUserId);
 
     if (!userUpdated) {
       const error = errorResponse(
@@ -65,6 +69,10 @@ export const updateUserController = async (
     const success = successResponse(userUpdated, "User updated successfuly");
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al actualizar el usuario", 500);
     res.status(error.status_code).json(error);
@@ -72,12 +80,13 @@ export const updateUserController = async (
 };
 
 export const deleteUserController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { user_id } = req.params;
-    const userDeleted = await deleteUserUseCase.execute(user_id);
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
+    const userDeleted = await deleteUserUseCase.execute(user_id, currentUserId);
 
     if (!userDeleted) {
       const error = errorResponse(
@@ -91,6 +100,10 @@ export const deleteUserController = async (
     const success = successResponse(userDeleted, "User deleted successfuly");
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al eliminar el usuario", 500);
     res.status(error.status_code).json(error);
@@ -120,12 +133,13 @@ export const getUsersController = async (
 };
 
 export const getUserController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { user_id } = req.params;
-    const userGeted = await getUserUseCase.execute(user_id);
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
+    const userGeted = await getUserUseCase.execute(user_id, currentUserId);
 
     if (!userGeted) {
       const error = errorResponse("No fue posible encontrar el usuario.", 400);
@@ -136,6 +150,10 @@ export const getUserController = async (
     const success = successResponse(userGeted, "Users geted successfuly");
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al obtener el usuario", 500);
     res.status(error.status_code).json(error);

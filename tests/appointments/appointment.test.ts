@@ -1,84 +1,104 @@
 import request from "supertest";
-import { app } from "../../src/app";
-import { PrismaClient } from "@prisma/client";
+import { TokenService } from "../../src/infrastructure/services/TokenServiceImpl";
 
-const prisma = new PrismaClient();
+const PATIENT_ID = 1;
+const OWNER_USER_ID = 1;
+const OTHER_USER_ID = 2;
 let token: string;
-let userId: number;
-let patientId: number;
-let createdAppointments: number[] = [];
+let tokenOtherUser: string;
+let app: import("express").Express;
+let nextId = 1;
+const deletedIds = new Set<number>();
+
+jest.mock("../../src/infrastructure/database/prisma/prisma.client", () => ({
+  __esModule: true,
+  default: {
+    appointment: {
+      create: jest.fn().mockImplementation((args: { data: Record<string, unknown> }) => {
+        const id = nextId++;
+        return Promise.resolve({
+          id,
+          date: args.data.date ?? new Date(),
+          attended: args.data.attended ?? false,
+          status: args.data.status ?? null,
+          patientId: args.data.patientId ?? PATIENT_ID,
+        });
+      }),
+      update: jest.fn().mockImplementation((args: { where: { id: number }; data: Record<string, unknown> }) => {
+        return Promise.resolve({
+          id: args.where.id,
+          date: args.data.date ?? new Date(Date.now() + 3600 * 1000),
+          attended: args.data.attended ?? true,
+          status: args.data.status ?? null,
+          patientId: PATIENT_ID,
+        });
+      }),
+      delete: jest.fn().mockImplementation((args: { where: { id: number } }) => {
+        deletedIds.add(args.where.id);
+        return Promise.resolve({
+          id: args.where.id,
+          date: new Date(),
+          attended: false,
+          status: null,
+          patientId: PATIENT_ID,
+        });
+      }),
+      findUnique: jest.fn().mockImplementation((args: { where: { id: number }; select?: unknown; include?: unknown }) => {
+        if (deletedIds.has(args.where.id)) {
+          return Promise.reject(new Error("Record to update not found."));
+        }
+        const base = {
+          id: args.where.id,
+          date: new Date(),
+          attended: false,
+          status: null,
+          patientId: PATIENT_ID,
+        };
+        const withPatient = args.select || args.include
+          ? { ...base, patient: { user_id: OWNER_USER_ID } }
+          : base;
+        return Promise.resolve(withPatient);
+      }),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    $connect: jest.fn().mockResolvedValue(undefined),
+  },
+}));
 
 beforeAll(async () => {
-  const loginRes = await request(app)
-    .post("/api/auth/login")
-    .send({ email: "test@example.com", password: "iamsecure" });
-
-  token = loginRes.body.data.token;
-
-  const user = await prisma.user.create({
-    data: {
-      first_name: "Appointment",
-      last_name: "Test",
-      middle_last_name: null,
-      role: "admin",
-      password: "123456",
-      email: `apptestuser@example.com`,
-      is_active: true,
-      phone: `5559990000`,
-    },
-  });
-
-  userId = user.id;
-
-  const patient = await prisma.patient.create({
-    data: {
-      first_name: "Cita",
-      last_name: "Paciente",
-      second_last_name: null,
-      age: "30",
-      gender: "Masculino",
-      address: "Av. Siempre Viva 123",
-      is_active: true,
-      occupation: "Doctor",
-      phone: `5557779999`,
-      user_id: user.id,
-    },
-  });
-
-  patientId = patient.id;
+  process.env.JWT_SECRET = "test-secret";
+  const tokenService = new TokenService();
+  token = tokenService.generate({ sub: String(OWNER_USER_ID), type: "access", role: "admin" });
+  tokenOtherUser = tokenService.generate({ sub: String(OTHER_USER_ID), type: "access", role: "admin" });
+  const { app: appModule, appReady } = await import("../../src/app");
+  app = appModule;
+  await appReady;
+  await new Promise<void>((r) => setImmediate(r));
+  await new Promise((r) => setTimeout(r, 80));
 });
 
-afterAll(async () => {
-  await prisma.appointment.deleteMany({
-    where: { id: { in: createdAppointments } },
-  });
-
-  await prisma.patient.delete({ where: { id: patientId } });
-  await prisma.user.delete({ where: { id: userId } });
-  await prisma.$disconnect();
+beforeEach(() => {
+  deletedIds.clear();
 });
 
 const generateAppointmentData = (offsetMinutes = 0) => ({
   date: new Date(Date.now() + offsetMinutes * 60 * 1000).toISOString(),
   attended: false,
-  patientId,
+  patientId: PATIENT_ID,
 });
 
-const createTestAppointment = async (appointment: any) => {
-  const res = await request(app)
+const createTestAppointment = async (appointment: ReturnType<typeof generateAppointmentData>) => {
+  return request(app)
     .post("/api/appointments")
     .set("Authorization", `Bearer ${token}`)
     .send(appointment);
-
-  if (res.body?.data?.id) createdAppointments.push(res.body.data.id);
-  return res;
 };
 
 describe("Pruebas de creación, edición y eliminación de citas", () => {
   it("Debe crear múltiples citas correctamente", async () => {
     const count = 5;
     for (let i = 0; i < count; i++) {
-      const appointment = generateAppointmentData(i * 10); // cada 10 minutos
+      const appointment = generateAppointmentData(i * 10);
       const res = await createTestAppointment(appointment);
 
       expect(res.status).toBe(200);
@@ -91,11 +111,9 @@ describe("Pruebas de creación, edición y eliminación de citas", () => {
     const appointment = generateAppointmentData();
     const resCreate = await createTestAppointment(appointment);
     const appointmentId = resCreate.body.data.id;
-    console.log('resCreate',resCreate.body);
-    
 
     const updatedData = {
-      date: new Date(Date.now() + 3600 * 1000).toISOString(), // +1 hora
+      date: new Date(Date.now() + 3600 * 1000).toISOString(),
       attended: true,
     };
 
@@ -121,11 +139,40 @@ describe("Pruebas de creación, edición y eliminación de citas", () => {
     expect(resDelete.status).toBe(200);
     expect(resDelete.body.data.id).toBe(appointmentId);
 
-    // Validar que ya no existe
     const resGet = await request(app)
       .get(`/api/appointments/${appointmentId}`)
       .set("Authorization", `Bearer ${token}`);
 
-    expect(resGet.status).toBe(500);
+    expect(resGet.status).toBe(404);
+  });
+
+  describe("Ownership (403 al acceder a la cita de otro usuario)", () => {
+    it("Debe devolver 403 al obtener cita de otro usuario", async () => {
+      const res = await request(app)
+        .get("/api/appointments/1")
+        .set("Authorization", `Bearer ${tokenOtherUser}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.result).toBe(false);
+    });
+
+    it("Debe devolver 403 al editar cita de otro usuario", async () => {
+      const res = await request(app)
+        .put("/api/appointments/1")
+        .set("Authorization", `Bearer ${tokenOtherUser}`)
+        .send({ date: new Date().toISOString(), attended: true });
+
+      expect(res.status).toBe(403);
+      expect(res.body.result).toBe(false);
+    });
+
+    it("Debe devolver 403 al eliminar cita de otro usuario", async () => {
+      const res = await request(app)
+        .delete("/api/appointments/999")
+        .set("Authorization", `Bearer ${tokenOtherUser}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.result).toBe(false);
+    });
   });
 });

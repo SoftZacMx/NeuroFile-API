@@ -34,8 +34,15 @@ export class AppointmentRepositoryImpl implements IAppointmentRepository {
 
   async getAppointment(id: number) {
     try {
-      return await prisma.appointment.findUnique({ where: { id } });
+      return await prisma.appointment.findUnique({
+        where: { id },
+        include: { patient: { select: { user_id: true } } },
+      });
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.toLowerCase().includes("not found")) {
+        return { code: "P2025", message: "No se encontró el registro que se intentó consultar." };
+      }
       return mapPrismaError(error);
     }
   }

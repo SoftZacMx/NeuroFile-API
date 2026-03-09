@@ -83,12 +83,11 @@ export class ClinicalNoteRepositoryImpl {
     }
   }
 
-  async getNote(noteId: number){
+  async getNote(noteId: number) {
     try {
-      console.log('note id',noteId);
-      
       return await prisma.clinicalNote.findUnique({
         where: { id: noteId },
+        include: { record: { select: { patient: { select: { user_id: true } } } } },
       });
     } catch (error) {
       return mapPrismaError(error);

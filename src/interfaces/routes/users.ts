@@ -7,6 +7,7 @@ import {
   updateUserController,
 } from "../controllers/users.controllers";
 import { checkJWT } from "../middelwares/auth/checkJWT";
+import { createUserValidator } from "../middelwares/validators/users.validators";
 import { asyncHandler } from "../../shared/middelwares/asyncHandler";
 
 const router = Router();
@@ -29,7 +30,7 @@ const router = Router();
  *       200:
  *         description: Usuario creado
  */
-router.post("/", asyncHandler(createUserController));
+router.post("/", checkJWT, createUserValidator, asyncHandler(createUserController));
 router.put("/:user_id", checkJWT, asyncHandler(updateUserController));
 router.delete("/:user_id", checkJWT, asyncHandler(deleteUserController));
 router.get("/", checkJWT, asyncHandler(getUsersController));

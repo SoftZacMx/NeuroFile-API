@@ -2,13 +2,15 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { router } from "./interfaces/routes";
+import { router, routesReady } from "./interfaces/routes";
 import { setupSwagger } from "./infrastructure/config/swagger";
 import { globalErrorHandler } from "./shared/middelwares/globalError.middleware";
 import { requestIdMiddleware } from "./shared/middelwares/requestId.middleware";
 import prisma from "./infrastructure/database/prisma/prisma.client";
 
 export const app = express();
+/** Resuelve cuando el router ha terminado de cargar todas las rutas (para tests y arranque). */
+export const appReady = routesReady;
 app.use(requestIdMiddleware);
 app.use(cors());
 app.use(express.json());
@@ -33,5 +35,7 @@ async function start() {
   });
 }
 
-start();
+if (require.main === module) {
+  start();
+}
 

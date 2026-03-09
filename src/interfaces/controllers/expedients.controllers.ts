@@ -1,10 +1,9 @@
 import { Request, Response } from "express";
-
+import { RequestWithUser } from "../../shared/types/RequestWithUser";
 import {
   successResponse,
   errorResponse,
 } from "../../shared/helpers/response.helper";
-
 import { CreateExpedientUseCase } from "../../aplication/use-cases/expedients/CreateExpedientUseCase";
 import { ExpedientRepositoryImpl } from "../../infrastructure/repositories/ExpedientsRepositoryImplementation";
 import { UpdateExpedientUseCase } from "../../aplication/use-cases/expedients/UpdateExpedientUseCase";
@@ -12,6 +11,7 @@ import { DeleteExpedientUseCase } from "../../aplication/use-cases/expedients/De
 import { GetExpedientUseCase } from "../../aplication/use-cases/expedients/GetExpedientUseCase";
 import { GetExpedientsUseCase } from "../../aplication/use-cases/expedients/GetExpedientsUseCase";
 import { IPrismaError } from "../../domain/errors/IPrismaErrors";
+import { ForbiddenError } from "../../domain/errors/ForbiddenError";
 
 const expedientsRepository = new ExpedientRepositoryImpl();
 const createExpedientUseCase = new CreateExpedientUseCase(expedientsRepository);
@@ -55,16 +55,16 @@ export const createExpedientController = async (
 };
 
 export const updateExpedientController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { expedient_id } = req.params;
-    console.log("Expedient ID:", expedient_id);
-
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const expedientUpdated = await updateExpedientUseCase.execute(
       req.body,
-      parseInt(expedient_id)
+      parseInt(expedient_id),
+      currentUserId
     );
 
     if ((expedientUpdated as IPrismaError).code) {
@@ -74,6 +74,7 @@ export const updateExpedientController = async (
         expedientUpdated
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -82,6 +83,10 @@ export const updateExpedientController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al actualizar el expediente", 500);
     res.status(error.status_code).json(error);
@@ -89,12 +94,13 @@ export const updateExpedientController = async (
 };
 
 export const deleteExpedientController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { expedient_id } = req.params;
-    const expedientDeleted = await deleteExpedientUseCase.execute(expedient_id);
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
+    const expedientDeleted = await deleteExpedientUseCase.execute(expedient_id, currentUserId);
 
     if ((expedientDeleted as IPrismaError).code) {
       const error = errorResponse(
@@ -103,6 +109,7 @@ export const deleteExpedientController = async (
         expedientDeleted
       );
       res.status(error.status_code).json(error);
+      return;
     }
     const success = successResponse(
       expedientDeleted,
@@ -110,6 +117,10 @@ export const deleteExpedientController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al eliminar el expediente", 500);
     res.status(error.status_code).json(error);
@@ -146,21 +157,21 @@ export const getExpedientsController = async (
 };
 
 export const getExpedinetController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { expedient_id } = req.params;
-    console.log("Expedient ID:", expedient_id);
-
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const expedientGeted = await getExpedientUseCase.execute(
-      parseInt(expedient_id)
+      parseInt(expedient_id),
+      currentUserId
     );
 
-    if (!expedientGeted) {
+    if (!expedientGeted || (expedientGeted as IPrismaError).code) {
       const error = errorResponse(
         "No fue posible encontrar el expediente.",
-        400
+        404
       );
       res.status(error.status_code).json(error);
       return;
@@ -172,6 +183,10 @@ export const getExpedinetController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al obtener el expediente", 500);
     res.status(error.status_code).json(error);

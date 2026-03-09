@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { RequestWithUser } from "../../shared/types/RequestWithUser";
 import { CreateAppointmentUseCase } from "../../aplication/use-cases/appointments/CreateAppointmentUseCase";
 import { UpdateAppointmentUseCase } from "../../aplication/use-cases/appointments/UpdateApoitmentUseCase";
 import { DeleteAppointmentUseCase } from "../../aplication/use-cases/appointments/DeleteAppointmentUseCase";
@@ -7,6 +8,7 @@ import { GetAppointmentsUseCase } from "../../aplication/use-cases/appointments/
 import { AppointmentRepositoryImpl } from "../../infrastructure/repositories/AppointmentsRepositoryImple";
 import { successResponse, errorResponse } from "../../shared/helpers/response.helper";
 import { IPrismaError } from "../../domain/errors/IPrismaErrors";
+import { ForbiddenError } from "../../domain/errors/ForbiddenError";
 
 const repo = new AppointmentRepositoryImpl();
 const createUC = new CreateAppointmentUseCase(repo);
@@ -45,16 +47,16 @@ export const createAppointmentController = async (
 };
 
 export const updateAppointmentController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { appointment_id } = req.params;
-    console.log("Appointment ID:", appointment_id);
-
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const AppointmentUpdated = await updateUC.execute(
       parseInt(appointment_id),
       req.body,
+      currentUserId
     );
 
     if ((AppointmentUpdated as IPrismaError).code) {
@@ -64,6 +66,7 @@ export const updateAppointmentController = async (
         AppointmentUpdated
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -72,6 +75,10 @@ export const updateAppointmentController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al actualizar la cita", 500);
     res.status(error.status_code).json(error);
@@ -79,12 +86,13 @@ export const updateAppointmentController = async (
 };
 
 export const deleteAppointmentController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { appointment_id } = req.params;
-    const AppointmentDeleted = await deleteUC.execute(parseInt(appointment_id));
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
+    const AppointmentDeleted = await deleteUC.execute(parseInt(appointment_id), currentUserId);
 
     if ((AppointmentDeleted as IPrismaError).code) {
       const error = errorResponse(
@@ -93,6 +101,7 @@ export const deleteAppointmentController = async (
         AppointmentDeleted
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -101,6 +110,10 @@ export const deleteAppointmentController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al eliminar la cita", 500);
     res.status(error.status_code).json(error);
@@ -155,24 +168,28 @@ export const getAppointmentsController = async (
 };
 
 export const getAppointmentController = async (
-  req: Request,
+  req: RequestWithUser,
   res: Response
 ): Promise<void> => {
   try {
     const { appointment_id } = req.params;
-    console.log("Appointment ID:", appointment_id);
-
+    const currentUserId = req.user?.sub != null ? parseInt(req.user.sub, 10) : 0;
     const AppointmentGeted = await getOneUC.execute(
-      parseInt(appointment_id)
+      parseInt(appointment_id),
+      currentUserId
     );
 
-    if ((AppointmentGeted as IPrismaError).code) {
+    const err = AppointmentGeted as IPrismaError;
+    if (err.code) {
+      const isNotFound = err.code === "P2025" || (err.message && String(err.message).toLowerCase().includes("not found"));
+      const statusCode = isNotFound ? 404 : 500;
       const error = errorResponse(
-        "No se pudo obtener la cita",
-        500,
+        isNotFound ? "Cita no encontrada." : "No se pudo obtener la cita",
+        statusCode,
         AppointmentGeted
       );
       res.status(error.status_code).json(error);
+      return;
     }
 
     const success = successResponse(
@@ -181,6 +198,10 @@ export const getAppointmentController = async (
     );
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      res.status(403).json({ result: false, message: err.message });
+      return;
+    }
     console.error(err);
     const error = errorResponse("Error al obtener la cita", 500);
     res.status(error.status_code).json(error);
