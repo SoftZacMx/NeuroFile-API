@@ -12,7 +12,15 @@ export const app = express();
 /** Resuelve cuando el router ha terminado de cargar todas las rutas (para tests y arranque). */
 export const appReady = routesReady;
 app.use(requestIdMiddleware);
-app.use(cors());
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  ...(process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
+    : []),
+];
+app.use(cors({ origin: allowedOrigins }));
+
 app.use(express.json());
 app.use(router);
 setupSwagger(app);
