@@ -115,7 +115,14 @@ export const Messages = {
   auth: {
     loginSuccess: "Login successful",
     tokenError: "Could not generate token",
-    loginError: "Login error",
+    loginError: "Error al iniciar sesión",
+    loginInvalidCredentials: "Correo o contraseña incorrectos",
+    forgotPasswordError: "Error processing password reset request",
+    resetPasswordSuccess: "Password updated successfully",
+    resetPasswordInvalidToken: "Enlace inválido o expirado. Solicita uno nuevo.",
+    resetPasswordUserNotFound: "User not found",
+    resetPasswordUpdateError: "Could not update password",
+    resetPasswordError: "Error resetting password",
   },
   dashboard: {
     unauthorized: "Unauthorized.",

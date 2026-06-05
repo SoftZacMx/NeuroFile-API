@@ -1,0 +1,29 @@
+meta {
+  name: Crear usuario
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/users
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"first_name":"","last_name":"","middle_last_name":"","role":"","password":"","email":"","phone":""}
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request POST '{{baseUrl}}/api/users' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{"first_name":"","last_name":"","middle_last_name":"","role":"","password":"","email":"","phone":""}'
+}

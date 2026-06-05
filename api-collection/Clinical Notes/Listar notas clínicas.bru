@@ -1,0 +1,19 @@
+meta {
+  name: Listar notas clínicas
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/clinical-notes
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request GET '{{baseUrl}}/api/clinical-notes'
+}

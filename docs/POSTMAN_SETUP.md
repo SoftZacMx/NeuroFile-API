@@ -25,12 +25,16 @@ Obtén el token con **POST /api/auth/login** (email + password).
 
 ---
 
-### Auth (sin JWT para login)
+### Auth (sin JWT para login y recuperación)
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/auth/login` | Login (body: `email`, `password`) |
+| POST | `/api/auth/forgot-password` | Solicitar enlace de recuperación (body: `email`) |
+| POST | `/api/auth/reset-password` | Restablecer contraseña (body: `token`, `password`) |
 | POST | `/api/auth/verify-user` | Verificar usuario **(JWT)** |
+
+Ver flujo completo en **`docs/PASSWORD_RESET.md`**. Colección Bruno: `api-collection/Auth/forgot-password.bru` y `reset-password.bru`.
 
 ---
 

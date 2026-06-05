@@ -1,0 +1,75 @@
+meta {
+  name: Crear expediente
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/expedients
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "patient_id": 1,
+    "incident_details": "",
+    "physical_description": "",
+    "treatment_demand": "",
+    "school_area": "",
+    "work_area": "",
+    "significant_events": "",
+    "psychosexual_history": "",
+    "therapeutic_focus": "",
+    "therapeutic_goal": "",
+    "therapeutic_strategy": "",
+    "therapeutic_forecast": "",
+    "family_diagram": "",
+    "family_relationship": "",
+    "family_mapping": "",
+    "diagnostic_impression": "",
+    "family_hypothesis": "",
+    "mental_exam": "",
+    "diagnostic_notes": "",
+    "consultation_reason": ""
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request POST '{{baseUrl}}/api/expedients' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "patient_id": 0,
+    "incident_details": "",
+    "physical_description": "",
+    "treatment_demand": "",
+    "school_area": "",
+    "work_area": "",
+    "significant_events": "",
+    "psychosexual_history": "",
+    "therapeutic_focus": "",
+    "therapeutic_goal": "",
+    "therapeutic_strategy": "",
+    "therapeutic_forecast": "",
+    "family_diagram": "",
+    "family_relationship": "",
+    "family_mapping": "",
+    "diagnostic_impression": "",
+    "family_hypothesis": "",
+    "mental_exam": "",
+    "diagnostic_notes": "",
+    "consultation_reason": ""
+  }'
+}

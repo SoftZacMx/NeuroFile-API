@@ -59,6 +59,19 @@ export class UserRepositoryImpl {
     }
   }
 
+  async updatePassword(user_id: string, password: string): Promise<boolean> {
+    try {
+      await prisma.user.update({
+        where: { id: parseInt(user_id) },
+        data: { password },
+      });
+      return true;
+    } catch (error) {
+      console.error("Error updating password:", error);
+      return false;
+    }
+  }
+
   async getUser(id: string): Promise<IUser | null> {
     try {
       const getUser = await prisma.user.findUnique({

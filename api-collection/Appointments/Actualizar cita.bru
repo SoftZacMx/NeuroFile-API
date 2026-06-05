@@ -1,0 +1,45 @@
+meta {
+  name: Actualizar cita
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/appointments/:appointment_id
+  body: json
+  auth: bearer
+}
+
+params:path {
+  appointment_id: 3
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "date": "{{currentDate}}",
+    "status": true,
+    "attended": true
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request PUT '{{baseUrl}}/api/appointments/:appointment_id' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "date": "",
+    "status": false,
+    "attended": false
+  }'
+}
