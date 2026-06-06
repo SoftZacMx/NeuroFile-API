@@ -1,0 +1,39 @@
+meta {
+  name: Actualizar nota clínica
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/clinical-notes/:note_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  note_id: 
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "date": "",
+    "note": ""
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request PUT '{{baseUrl}}/api/clinical-notes/:note_id' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "date": "",
+    "note": ""
+  }'
+}

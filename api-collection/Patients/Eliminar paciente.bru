@@ -1,0 +1,23 @@
+meta {
+  name: Eliminar paciente
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/patients/:user_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  user_id: 
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request DELETE '{{baseUrl}}/api/patients/:user_id'
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Eliminar usuario
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/users/:user_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  user_id: 
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request DELETE '{{baseUrl}}/api/users/:user_id'
+}

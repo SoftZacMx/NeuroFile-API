@@ -155,6 +155,7 @@ Si la API y los workers corren **dentro de Docker**, las URLs de servicios deben
 ## 5. Comprobar que el flujo hasta Fase 5 funciona
 
 1. **Login:** `POST /api/auth/login` con `{ "email": "maria.garcia@neurofile.com", "password": "NeuroFile2025" }` (tras `npm run db:seed`). Guardar el `token`.
+1b. **Recuperación de contraseña (opcional):** ver [PASSWORD_RESET.md](./PASSWORD_RESET.md).
 2. **Crear conversación:** `POST /api/conversations` con `Authorization: Bearer <token>` y body `{ "patientId": 1 }`. Guardar `conversationId`.
 3. **Subir fragmento:** `POST /api/conversations/:id/fragments/upload` (multipart: `sequenceIndex`, `recordedAt`, `file` con un audio).
 4. **Terminar conversación:** `POST /api/conversations/:id/end`.

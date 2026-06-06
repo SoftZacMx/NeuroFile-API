@@ -1,0 +1,23 @@
+meta {
+  name: Obtener expediente por ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/expedients/:expedient_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  expedient_id: 1
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request GET '{{baseUrl}}/api/expedients/:expedient_id'
+}

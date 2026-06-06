@@ -23,8 +23,34 @@ const loginValidator = [
         
 ];
 
+const forgotPasswordValidator = [
+    check('email')
+        .exists().withMessage('The email is required.')
+        .notEmpty().withMessage('The email cannot be empty.')
+        .isEmail().withMessage('The email must be a email.'),
+            (req:Request,res:Response,next:NextFunction) => {
+        handleValidatons(req,res,next)
 
+    },
+];
+
+const resetPasswordValidator = [
+    check('token')
+        .exists().withMessage('The token is required.')
+        .notEmpty().withMessage('The token cannot be empty.')
+        .isString().withMessage('The token must be a string.'),
+    check('password')
+        .exists().withMessage('The password is required.')
+        .notEmpty().withMessage('The password cannot be empty.')
+        .isString().withMessage('The password must be a string.'),
+            (req:Request,res:Response,next:NextFunction) => {
+        handleValidatons(req,res,next)
+
+    },
+];
 
 export {
-    loginValidator
+    loginValidator,
+    forgotPasswordValidator,
+    resetPasswordValidator,
 };

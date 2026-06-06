@@ -1,0 +1,29 @@
+meta {
+  name: Upload audio fragment
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/conversations/{{conversationId}}/fragments/upload
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:multipart-form {
+  sequenceIndex: 1
+  recordedAt: {{recordedAt}}
+  file: @file(/Users/brrodriguez/projects/NeuroFile/AudiosTest/TestAudioFinalCompleto.mp3)
+}
+
+script:pre-request {
+  bru.setEnvVar("recordedAt", new Date().toISOString());
+}
+
+settings {
+  encodeUrl: true
+}

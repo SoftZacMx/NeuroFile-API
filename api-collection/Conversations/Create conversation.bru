@@ -1,0 +1,25 @@
+meta {
+  name: Create conversation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/conversations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "patientId": 1
+  }
+}
+
+settings {
+  encodeUrl: true
+}

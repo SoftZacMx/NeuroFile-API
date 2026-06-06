@@ -1,0 +1,23 @@
+meta {
+  name: Eliminar expediente
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/expedients/:expedient_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  expedient_id: 
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request DELETE '{{baseUrl}}/api/expedients/:expedient_id'
+}

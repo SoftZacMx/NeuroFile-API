@@ -1,0 +1,49 @@
+meta {
+  name: Crear cita
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/appointments
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "date": "{{currentDate}}",
+    "patientId": 3,
+    "status": false,
+    "attended": false
+    
+  }
+}
+
+script:pre-request {
+  // Formato ISO (ej: 2025-03-04T12:00:00.000Z)
+  bru.setEnvVar("currentDate", new Date().toISOString());
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request POST '{{baseUrl}}/api/appointments' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "date": "",
+    "patientId": 0,
+    "status": false,
+    "attended": false
+  }'
+}

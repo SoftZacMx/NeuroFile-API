@@ -1,0 +1,27 @@
+meta {
+  name: Eliminar cita
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/appointments/:appointment_id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  appointment_id: 3
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request DELETE '{{baseUrl}}/api/appointments/:appointment_id'
+}

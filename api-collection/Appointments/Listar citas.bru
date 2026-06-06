@@ -1,0 +1,23 @@
+meta {
+  name: Listar citas
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/appointments
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request GET '{{baseUrl}}/api/appointments'
+}

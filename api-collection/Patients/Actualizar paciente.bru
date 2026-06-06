@@ -1,0 +1,33 @@
+meta {
+  name: Actualizar paciente
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/patients/:user_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  user_id: 
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"first_name":"","last_name":"","second_last_name":"","age":"","gender":"","address":"","occupation":"","phone":""}
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request PUT '{{baseUrl}}/api/patients/:user_id' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{"first_name":"","last_name":"","second_last_name":"","age":"","gender":"","address":"","occupation":"","phone":""}'
+}

@@ -1,0 +1,74 @@
+meta {
+  name: Actualizar expediente
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/expedients/{{expedient_id}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "incident_details": "Editado",
+    "physical_description": "",
+    "treatment_demand": "",
+    "school_area": "",
+    "work_area": "",
+    "significant_events": "",
+    "psychosexual_history": "",
+    "therapeutic_focus": "",
+    "therapeutic_goal": "",
+    "therapeutic_strategy": "",
+    "therapeutic_forecast": "",
+    "family_diagram": "",
+    "family_relationship": "",
+    "family_mapping": "",
+    "diagnostic_impression": "",
+    "family_hypothesis": "",
+    "mental_exam": "",
+    "diagnostic_notes": "",
+    "consultation_reason": "",
+    "patient_id":1
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request PUT '{{baseUrl}}/api/expedients/:expedient_id' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "incident_details": "",
+    "physical_description": "",
+    "treatment_demand": "",
+    "school_area": "",
+    "work_area": "",
+    "significant_events": "",
+    "psychosexual_history": "",
+    "therapeutic_focus": "",
+    "therapeutic_goal": "",
+    "therapeutic_strategy": "",
+    "therapeutic_forecast": "",
+    "family_diagram": "",
+    "family_relationship": "",
+    "family_mapping": "",
+    "diagnostic_impression": "",
+    "family_hypothesis": "",
+    "mental_exam": "",
+    "diagnostic_notes": "",
+    "consultation_reason": ""
+  }'
+}

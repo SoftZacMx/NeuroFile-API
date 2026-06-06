@@ -1,0 +1,33 @@
+meta {
+  name: Actualizar usuario
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/users/:user_id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  user_id: 
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {"first_name":"","last_name":"","middle_last_name":"","role":"","password":"","email":"","phone":""}
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Generated from cURL: curl --location --request PUT '{{baseUrl}}/api/users/:user_id' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{"first_name":"","last_name":"","middle_last_name":"","role":"","password":"","email":"","phone":""}'
+}
