@@ -42,6 +42,7 @@ export class PatientRepositoryImplementation {
         where: userId === null ? undefined : { user_id: userId },
         include: {
           appointments: {
+            where: { status: true },
             orderBy: { date: "desc" },
             take: 1,
           },
