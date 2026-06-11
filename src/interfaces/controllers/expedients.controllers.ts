@@ -127,7 +127,16 @@ export const getExpedientsController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const expedientsGeted = await getExpedientsUseCase.execute();
+    const patientIdParam = req.query.patientId;
+    const parsedPatientId =
+      patientIdParam != null
+        ? parseInt(String(patientIdParam), 10)
+        : undefined;
+    const patientIdFilter =
+      parsedPatientId != null && !Number.isNaN(parsedPatientId)
+        ? parsedPatientId
+        : undefined;
+    const expedientsGeted = await getExpedientsUseCase.execute(patientIdFilter);
 
     if ((expedientsGeted as IPrismaError).code) {
       const error = errorResponse(

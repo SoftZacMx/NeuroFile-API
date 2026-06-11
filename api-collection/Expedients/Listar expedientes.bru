@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/expedients
+  url: {{baseUrl}}/api/expedients?patientId=1
   body: none
   auth: bearer
 }
@@ -19,5 +19,6 @@ settings {
 }
 
 docs {
-  Generated from cURL: curl --location --request GET '{{baseUrl}}/api/expedients'
+  Lista expedientes. Opcional: `?patientId=1` filtra por paciente.
+  Sin query param devuelve todos los expedientes (pantalla global).
 }

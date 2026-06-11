@@ -13,6 +13,6 @@ export interface IExpedientRepository {
     expedient_id: number
   ): Promise<UpdateRecordDTO | IPrismaError>;
   deleteRecord(expedient_id: string): Promise<CreateRecordDTO | IPrismaError>;
-  getExpedients(): Promise<ExpedientDTO[] | IPrismaError>;
+  getExpedients(patientId?: number): Promise<ExpedientDTO[] | IPrismaError>;
   getExpedient(expedient_id: number): Promise<ExpedientDTO | IPrismaError|null>;
 }

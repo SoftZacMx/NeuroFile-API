@@ -168,9 +168,10 @@ export class ExpedientRepositoryImpl {
     }
   }
 
-  async getExpedients(): Promise<ExpedientDTO[] | IPrismaError> {
+  async getExpedients(patientId?: number): Promise<ExpedientDTO[] | IPrismaError> {
     try {
       return await prisma.record.findMany({
+        where: patientId != null ? { patient_id: patientId } : undefined,
         include: {
           symptoms: true,
           diagnoses: true,
