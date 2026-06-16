@@ -3,6 +3,7 @@ import { RequestWithUser } from "../../shared/types/RequestWithUser";
 import { successResponse, errorResponse } from "../../shared/helpers/response.helper";
 import { CreateConversationUseCase } from "../../aplication/use-cases/conversations/CreateConversationUseCase";
 import { EndConversationUseCase } from "../../aplication/use-cases/conversations/EndConversationUseCase";
+import { GetConversationStatusUseCase } from "../../aplication/use-cases/conversations/GetConversationStatusUseCase";
 import { GetPresignedFragmentUrlUseCase } from "../../aplication/use-cases/conversations/GetPresignedFragmentUrlUseCase";
 import { ConfirmFragmentUseCase } from "../../aplication/use-cases/conversations/ConfirmFragmentUseCase";
 import { UploadFragmentUseCase } from "../../aplication/use-cases/conversations/UploadFragmentUseCase";
@@ -25,6 +26,9 @@ const createConversationUseCase = new CreateConversationUseCase(
 const endConversationUseCase = new EndConversationUseCase(
   conversationRepository,
   sqsService
+);
+const getConversationStatusUseCase = new GetConversationStatusUseCase(
+  conversationRepository
 );
 const getPresignedFragmentUrlUseCase = new GetPresignedFragmentUrlUseCase(
   conversationRepository,
@@ -119,6 +123,54 @@ export const createConversationController = async (
   } catch (err) {
     console.error(err);
     const error = errorResponse("Error al crear la conversación", 500);
+    res.status(error.status_code).json(error);
+  }
+};
+
+/**
+ * GET /api/conversations/:id/status
+ * Devuelve el estado de procesamiento (transcriptionStatus, processedAt, endedAt)
+ * para que el frontend sepa si seguir esperando, redirigir o mostrar un aviso.
+ */
+export const getConversationStatusController = async (
+  req: RequestWithUser,
+  res: Response
+): Promise<void> => {
+  try {
+    const conversationId = parseInt(req.params.id, 10);
+    if (isNaN(conversationId) || conversationId <= 0) {
+      const error = errorResponse("id de conversación inválido", 400);
+      res.status(error.status_code).json(error);
+      return;
+    }
+
+    const userId = parseInt(req.user?.sub ?? "", 10);
+    if (isNaN(userId)) {
+      const error = errorResponse("Usuario no identificado", 401);
+      res.status(error.status_code).json(error);
+      return;
+    }
+
+    const result = await getConversationStatusUseCase.execute(
+      conversationId,
+      userId
+    );
+
+    if ("error" in result) {
+      const message =
+        result.error === "NOT_FOUND"
+          ? "Conversación no encontrada"
+          : "No tiene permiso para esta conversación";
+      const error = errorResponse(message, result.statusCode);
+      res.status(error.status_code).json(error);
+      return;
+    }
+
+    const success = successResponse(result.status, "Estado de la conversación");
+    res.status(200).json(success);
+  } catch (err) {
+    console.error("[api] Error al obtener el estado de la conversación:", err);
+    const error = errorResponse("Error al obtener el estado de la conversación", 500);
     res.status(error.status_code).json(error);
   }
 };

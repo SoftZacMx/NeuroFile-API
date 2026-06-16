@@ -6,14 +6,30 @@ services:
     environment:
       DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
       NODE_ENV: production
+      AWS_REGION: us-east-1
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET_AUDIO: neurofile-audio-local
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      SQS_ENDPOINT: http://localstack:4566
+      SQS_QUEUE_AUDIO_FRAGMENTS: neurofile-audio-fragments
+      SQS_QUEUE_TRANSCRIBE_CONVERSATION: neurofile-transcribe-conversation
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
     depends_on:
       mysql:
         condition: service_healthy
+      minio:
+        condition: service_started
+      localstack:
+        condition: service_started
+      sqs-init:
+        condition: service_completed_successfully
 
   # Worker: consume neurofile-audio-fragments y hace upsert en AudioFragment (Fase 4.3)
   worker-fragments:
     build: .
-    command: ["node", "dist/src/workers/run-fragments-worker.js"]
+    command: ["node", "dist/workers/run-fragments-worker.js"]
     environment:
       DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
       SQS_ENDPOINT: http://localstack:4566
@@ -40,7 +56,7 @@ services:
   # Worker: consume neurofile-transcribe-conversation; Whisper, concatena y encola summarize-map (Fase 5.6)
   worker-transcribe:
     build: .
-    command: ["node", "dist/src/workers/run-transcribe-worker.js"]
+    command: ["node", "dist/workers/run-transcribe-worker.js"]
     environment:
       DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
       SQS_ENDPOINT: http://localstack:4566
@@ -67,7 +83,7 @@ services:
   # Worker: consume neurofile-summarize-map; LLM mapea transcripción a expediente, guarda ExpedientDraft (Fase 6)
   worker-summarize-map:
     build: .
-    command: ["node", "dist/src/workers/run-summarize-map-worker.js"]
+    command: ["node", "dist/workers/run-summarize-map-worker.js"]
     environment:
       DATABASE_URL: mysql://neurofile:neurofile@mysql:3306/neurofile
       SQS_ENDPOINT: http://localstack:4566
@@ -92,11 +108,12 @@ services:
       MYSQL_USER: neurofile
       MYSQL_PASSWORD: neurofile
     ports:
-      - "3306:3306"   # Si 3306 está ocupado, usa "3307:3306" y en .env pon localhost:3307
+      - "3306:3306" # Si 3306 está ocupado, usa "3307:3306" y en .env pon localhost:3307
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -105,8 +122,8 @@ services:
   minio:
     image: minio/minio:latest
     ports:
-      - "9000:9000"   # API S3
-      - "9001:9001"   # Consola web
+      - "9000:9000" # API S3
+      - "9001:9001" # Consola web
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin

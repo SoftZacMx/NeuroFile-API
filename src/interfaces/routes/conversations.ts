@@ -6,6 +6,7 @@ import { createConversationValidator } from "../middelwares/validators/conversat
 import {
   createConversationController,
   endConversationController,
+  getConversationStatusController,
   getPresignedFragmentUrlController,
   confirmFragmentController,
   uploadFragmentController,
@@ -30,6 +31,12 @@ router.post("/", checkJWT, createConversationValidator, asyncHandler(createConve
  * Termina la conversación (ended_at) y encola mensaje para transcripción.
  */
 router.post("/:id/end", checkJWT, asyncHandler(endConversationController));
+
+/**
+ * GET /api/conversations/:id/status
+ * Devuelve { transcriptionStatus, processedAt, endedAt } para el polling del frontend.
+ */
+router.get("/:id/status", checkJWT, asyncHandler(getConversationStatusController));
 
 /**
  * POST /api/conversations/:id/fragments
