@@ -30,9 +30,11 @@ export const createClinicalNoteController = async (
     const newClinicalNote = await createNoteUseCase.execute(req.body);
 
     if ((newClinicalNote as IPrismaError).code) {
+      const prismaErr = newClinicalNote as IPrismaError;
+      const statusCode = prismaErr.code === "P2000" ? 400 : 500;
       const error = errorResponse(
-        Messages.clinicalNote.createError,
-        500,
+        prismaErr.message || Messages.clinicalNote.createError,
+        statusCode,
         newClinicalNote,
         Codes.CREATE_ERROR
       );

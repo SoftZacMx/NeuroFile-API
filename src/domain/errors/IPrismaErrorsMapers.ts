@@ -21,6 +21,11 @@ export function mapPrismaError(error: unknown): IPrismaError {
           code: error.code,
           message: "No se encontró el registro que se intentó modificar o eliminar.",
         };
+      case "P2000":
+        return {
+          code: error.code,
+          message: "El contenido de la nota supera el límite permitido.",
+        };
       default:
         return {
           code: error.code,
