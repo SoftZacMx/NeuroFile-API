@@ -38,7 +38,7 @@ function emptyRecordDto(patientId: number): CreateRecordDTO {
 /**
  * Crea una conversación para un expediente (record).
  * - Si se pasa recordId: valida que el record exista y que el usuario tenga permiso (expediente del paciente del usuario).
- * - Si se pasa patientId: valida que el paciente exista y pertenezca al usuario, crea un expediente vacío para ese paciente y luego la conversación; devuelve también recordId.
+ * - Si se pasa patientId: valida que el paciente exista y pertenezca al usuario, reutiliza el expediente existente o crea uno vacío, y luego la conversación; devuelve también recordId.
  */
 export class CreateConversationUseCase {
   constructor(
@@ -102,28 +102,39 @@ export class CreateConversationUseCase {
       return { error: "FORBIDDEN", statusCode: 403 };
     }
 
-    const createResult = await this.expedientRepository.createRecord(
-      emptyRecordDto(patientId)
+    const existingRecord = await this.expedientRepository.findByPatientId(
+      patientId
     );
 
-    if ((createResult as IPrismaError).code) {
-      return { error: "RECORD_NOT_FOUND", statusCode: 500 };
+    let recordId: number;
+    if (existingRecord) {
+      recordId = existingRecord.id;
+    } else {
+      const createResult = await this.expedientRepository.createRecord(
+        emptyRecordDto(patientId)
+      );
+
+      if ((createResult as IPrismaError).code) {
+        return { error: "RECORD_NOT_FOUND", statusCode: 500 };
+      }
+
+      recordId = (createResult as ExpedientDTO).id;
     }
 
-    const record = createResult as ExpedientDTO;
     const conversation = await this.conversationRepository.create({
-      record_id: record.id,
+      record_id: recordId,
       user_id: userId,
     });
     console.log(
-      "[CreateConversationUseCase] Conversación creada (patientId). conversationId=%s recordId=%s",
+      "[CreateConversationUseCase] Conversación creada (patientId). conversationId=%s recordId=%s reused=%s",
       conversation.id,
-      record.id
+      recordId,
+      Boolean(existingRecord)
     );
     return {
       conversationId: conversation.id,
       startedAt: conversation.started_at,
-      recordId: record.id,
+      recordId,
     };
   }
 }

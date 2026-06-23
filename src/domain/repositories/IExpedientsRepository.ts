@@ -15,4 +15,5 @@ export interface IExpedientRepository {
   deleteRecord(expedient_id: string): Promise<CreateRecordDTO | IPrismaError>;
   getExpedients(patientId?: number): Promise<ExpedientDTO[] | IPrismaError>;
   getExpedient(expedient_id: number): Promise<ExpedientDTO | IPrismaError|null>;
+  findByPatientId(patientId: number): Promise<ExpedientDTO | null>;
 }

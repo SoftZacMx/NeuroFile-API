@@ -8,6 +8,7 @@ export const Codes = {
   UNAUTHORIZED: "UNAUTHORIZED",
   NOT_FOUND: "NOT_FOUND",
   VALIDATION_ERROR: "VALIDATION_ERROR",
+  CONFLICT: "CONFLICT",
   CREATE_ERROR: "CREATE_ERROR",
   UPDATE_ERROR: "UPDATE_ERROR",
   DELETE_ERROR: "DELETE_ERROR",
@@ -81,6 +82,7 @@ export const Messages = {
   expedient: {
     createSuccess: "Expedient created successfully",
     createError: "Expedient could not be created",
+    alreadyExists: "This patient already has a clinical record.",
     createFail: "Error creating expedient",
     updateSuccess: "Expedient updated successfully",
     updateError: "Expedient could not be updated",

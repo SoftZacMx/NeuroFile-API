@@ -1,8 +1,5 @@
-import { IUser } from "../../../domain/entities/IUser";
 import { IPrismaError } from "../../../domain/errors/IPrismaErrors";
-import { IUserRepository } from "../../../domain/repositories/IUserRepository";
-import { BcryptHashService } from "../../../infrastructure/services/HashServiceImpl";
-import { CreateUserDTO } from "../../dtos/user/CreateUserDTO";
+import { ExpedientAlreadyExistsError } from "../../../domain/errors/ExpedientAlreadyExistsError";
 import { IExpedientRepository } from "../../../domain/repositories/IExpedientsRepository";
 import { CreateRecordDTO } from "../../dtos/expedients/CreateExpedientDTO";
 import { ExpedientDTO } from "../../dtos/expedients/ExpedientDTO";
@@ -16,7 +13,13 @@ export class CreateExpedientUseCase {
 
   async execute(
     expedient: CreateRecordDTO
-  ): Promise<ExpedientDTO  | IPrismaError> {
+  ): Promise<ExpedientDTO | IPrismaError> {
+    const existing = await this.expedientRepository.findByPatientId(
+      expedient.patient_id
+    );
+    if (existing) {
+      throw new ExpedientAlreadyExistsError();
+    }
     return this.expedientRepository.createRecord(expedient);
   }
 }

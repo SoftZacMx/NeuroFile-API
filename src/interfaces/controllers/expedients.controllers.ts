@@ -14,6 +14,7 @@ import { GetExpedientUseCase } from "../../aplication/use-cases/expedients/GetEx
 import { GetExpedientsUseCase } from "../../aplication/use-cases/expedients/GetExpedientsUseCase";
 import { IPrismaError } from "../../domain/errors/IPrismaErrors";
 import { ForbiddenError } from "../../domain/errors/ForbiddenError";
+import { ExpedientAlreadyExistsError } from "../../domain/errors/ExpedientAlreadyExistsError";
 
 const expedientsRepository = new ExpedientRepositoryImpl();
 const createExpedientUseCase = new CreateExpedientUseCase(expedientsRepository);
@@ -47,6 +48,16 @@ export const createExpedientController = async (
     const success = successResponse(newExpedient, Messages.expedient.createSuccess);
     res.status(success.status_code).json(success);
   } catch (err) {
+    if (err instanceof ExpedientAlreadyExistsError) {
+      const error = errorResponse(
+        err.message || Messages.expedient.alreadyExists,
+        409,
+        undefined,
+        Codes.CONFLICT
+      );
+      res.status(error.status_code).json(error);
+      return;
+    }
     console.error(err);
     const error = errorResponse(Messages.expedient.createFail, 500, undefined, Codes.CREATE_ERROR);
     res.status(error.status_code).json(error);

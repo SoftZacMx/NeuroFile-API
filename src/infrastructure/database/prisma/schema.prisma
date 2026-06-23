@@ -69,7 +69,7 @@ model Record {
   diagnostic_notes       String
   consultation_reason    String
   created_at             DateTime                @default(now())
-  patient_id             Int
+  patient_id             Int                     @unique
   patient                Patient                 @relation(fields: [patient_id], references: [id], onDelete: Cascade)
   symptoms               Symptom[]
   modalities             TherapeuticModality[]

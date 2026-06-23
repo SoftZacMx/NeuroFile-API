@@ -203,4 +203,17 @@ export class ExpedientRepositoryImpl {
       return mapPrismaError(error)  ;
     }
   }
+
+  async findByPatientId(patientId: number): Promise<ExpedientDTO | null> {
+    return prisma.record.findFirst({
+      where: { patient_id: patientId },
+      orderBy: { id: "desc" },
+      include: {
+        symptoms: true,
+        diagnoses: true,
+        modalities: true,
+        patient: true,
+      },
+    });
+  }
 }
