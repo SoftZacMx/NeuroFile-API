@@ -50,6 +50,18 @@ jest.mock("../../src/infrastructure/database/prisma/prisma.client", () => ({
           modalities: modalitiesArr.map((_m: unknown, i: number) => ({ id: i + 1, recordId: 1 })),
         });
       }),
+      findMany: jest.fn().mockImplementation((args?: { where?: { patient_id?: number } }) => {
+        const records = [
+          { id: 1, patient_id: PATIENT_ID, consultation_reason: "Paciente 1", created_at: new Date() },
+          { id: 2, patient_id: 2, consultation_reason: "Paciente 2", created_at: new Date() },
+        ];
+        if (args?.where?.patient_id != null) {
+          return Promise.resolve(
+            records.filter((r) => r.patient_id === args.where!.patient_id)
+          );
+        }
+        return Promise.resolve(records);
+      }),
     },
     $connect: jest.fn().mockResolvedValue(undefined),
   },
@@ -128,5 +140,27 @@ describe("Pruebas de Records clínicos (con campos completos)", () => {
 
     expect(res.status).toBeGreaterThanOrEqual(400);
     expect(res.body.result).toBe(false);
+  });
+
+  it("Debe listar expedientes filtrados por patientId", async () => {
+    const res = await request(app)
+      .get("/api/expedients")
+      .query({ patientId: PATIENT_ID })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.every((r: { patient_id: number }) => r.patient_id === PATIENT_ID)).toBe(true);
+  });
+
+  it("Debe listar todos los expedientes sin patientId", async () => {
+    const res = await request(app)
+      .get("/api/expedients")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toBe(true);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(2);
   });
 });
