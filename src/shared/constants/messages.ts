@@ -129,5 +129,8 @@ export const Messages = {
     listSuccess: "Dashboard statistics",
     listError: "Error retrieving dashboard statistics.",
     listFail: "Error retrieving dashboard statistics",
+    appointmentsListSuccess: "Dashboard appointments retrieved successfully",
+    appointmentsListError: "Error retrieving dashboard appointments.",
+    appointmentsListFail: "Error retrieving dashboard appointments",
   },
 } as const;
