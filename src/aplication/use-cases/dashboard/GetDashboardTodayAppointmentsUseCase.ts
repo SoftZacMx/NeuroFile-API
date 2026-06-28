@@ -1,12 +1,14 @@
 import { DashboardScope } from "../../dtos/dashboard/DashboardScope";
-import { DashboardStatsDTO } from "../../dtos/dashboard/DashboardStatsDTO";
+import { DashboardTodayAppointmentDTO } from "../../dtos/dashboard/DashboardTodayAppointmentDTO";
 import { IDashboardStatsRepository } from "../../../domain/repositories/IDashboardStatsRepository";
 import { IPrismaError } from "../../../domain/errors/IPrismaErrors";
 
-export class GetDashboardStatsUseCase {
+export class GetDashboardTodayAppointmentsUseCase {
   constructor(private statsRepository: IDashboardStatsRepository) {}
 
-  async execute(scope: DashboardScope): Promise<DashboardStatsDTO | IPrismaError> {
-    return this.statsRepository.getStats(scope);
+  async execute(
+    scope: DashboardScope
+  ): Promise<DashboardTodayAppointmentDTO[] | IPrismaError> {
+    return this.statsRepository.getTodayAppointments(scope);
   }
 }
